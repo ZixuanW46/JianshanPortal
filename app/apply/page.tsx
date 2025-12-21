@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { mockApi, Application } from "@/lib/mock-api";
+import { Application } from "@/lib/mock-api"; // Keeping type definition
+import { dbService } from "@/lib/db-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,10 +34,16 @@ export default function ApplyPage() {
         const fetchApp = async () => {
             if (!user) return;
             try {
-                let myApp = await mockApi.getMyApplication(user.id);
+                // Use cloud DB service
+                let myApp = await dbService.getMyApplication(user.userId || user.uid || user._id); // Handle CloudBase user object differences?
+
+                // CloudBase auth user object usually has `uid`
+                // Let's use `user.uid` as standard key if available, else fallback.
+                const uid = user.uid || user.id;
+
                 if (!myApp) {
-                    // Create initial draft
-                    myApp = await mockApi.saveApplication(user.id, {});
+                    // Create initial draft in DB
+                    myApp = await dbService.createApplication(uid);
                 }
                 setApp(myApp);
             } catch (err) {
@@ -70,9 +77,10 @@ export default function ApplyPage() {
 
     const handleSave = async () => {
         if (!user || !app) return;
+        const uid = user.uid || user.id;
         setSaving(true);
         try {
-            await mockApi.saveApplication(user.id, app);
+            await dbService.saveApplication(uid, app);
             router.push("/dashboard");
         } finally {
             setSaving(false);
@@ -82,10 +90,13 @@ export default function ApplyPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !app) return;
+        const uid = user.uid || user.id;
         setSaving(true);
         try {
             // Perform validation here if needed
-            await mockApi.submitApplication(user.id);
+            // Also ensure latest data is saved before submit status change
+            await dbService.saveApplication(uid, app);
+            await dbService.submitApplication(uid);
             router.push("/dashboard");
         } finally {
             setSaving(false);

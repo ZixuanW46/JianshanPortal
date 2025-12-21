@@ -18,7 +18,7 @@ export function Navbar() {
     // However, usually login/register/welcome are standalone. 
     // Based on provided designs, they have their own headers.
     // Let's exclude Navbar from /login, /register, /welcome, /acceptance.
-    const hiddenPaths = ['/login', '/register', '/acceptance'];
+    const hiddenPaths = ['/login', '/register'];
     if (hiddenPaths.includes(pathname)) return null;
 
     return (

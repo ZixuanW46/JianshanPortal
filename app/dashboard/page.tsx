@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { mockApi, Application } from "@/lib/mock-api";
+import { dbService } from "@/lib/db-service";
 import { Button } from "@/components/ui/button";
 import { Check, Clock, FileText, Calendar, Mail, Loader2, ArrowRight, CreditCard, Download, Flag, PenTool, User, Eye, FilePen } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -286,11 +287,17 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchApp = async () => {
             if (!user) return;
+            const uid = user.uid || user.id;
             try {
-                const myApp = await mockApi.getMyApplication(user.id);
+                const myApp = await dbService.getMyApplication(uid);
                 setApp(myApp);
 
-                // If no app (shouldn't happen if registered), redirect.
+                // If no app (shouldn't happen if registered), redirect or handle.
+                // For real flow, usually user clicks Apply first.
+                // If dashboard is home, maybe show "Start Application".
+                // Current flow: if no app, redirect to welcome?
+                // But welcome says "Registration Complete".
+                // If myApp is null, we should probably redirect to welcome or show "Empty".
                 if (!myApp) {
                     router.replace("/welcome");
                     return;
@@ -302,30 +309,27 @@ export default function DashboardPage() {
             }
         };
         if (user) fetchApp();
-    }, [user, router]); // Dependency might cause loops if not careful, but replace should handle it.
+    }, [user, router]);
 
     // Helper to advance state for demo
     const handleAdvance = async () => {
-        if (!user) return;
+        if (!user || !app) return;
         setLoading(true);
+        const uid = user.uid || user.id;
         try {
-            const updated = await mockApi.advanceApplicationStatus(user.id);
+            await dbService.advanceStatus(uid, app.status);
+            // Re-fetch to see changes
+            const updated = await dbService.getMyApplication(uid);
             setApp(updated);
         } finally {
             setLoading(false);
         }
     };
 
-    // Helper to rollback state for demo
+    // Helper to rollback state for demo - DISABLED for now in DB mode
     const handleRollback = async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            const updated = await mockApi.rollbackApplicationStatus(user.id);
-            setApp(updated);
-        } finally {
-            setLoading(false);
-        }
+        // Not implemented in DB service yet
+        console.warn("Rollback not implemented");
     };
 
     if (authLoading || loading) {
@@ -466,15 +470,18 @@ export default function DashboardPage() {
                                 [DEV] Advance State
                             </Button>
                         )}
+                        {/* Rollback disabled for now
                         {(app.status === 'decision_released' || app.status === 'enrolled') && (
                             <Button onClick={handleRollback} size="sm" className="shadow-xl bg-blue-600 hover:bg-blue-700 text-white border-2 border-white">
                                 [DEV] Previous State
                             </Button>
                         )}
+                        */}
                         <Button onClick={async () => {
                             if (!user) return;
+                            const uid = user.uid || user.id;
                             setLoading(true);
-                            await mockApi.resetApplication(user.id);
+                            await dbService.resetApplication(uid);
                             router.push("/welcome");
                         }} size="sm" className="shadow-xl bg-slate-800 hover:bg-slate-900 text-white border-2 border-white">
                             [DEV] Reset / Clear App

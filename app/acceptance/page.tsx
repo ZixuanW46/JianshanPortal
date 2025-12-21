@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { mockApi } from "@/lib/mock-api";
+import { dbService } from "@/lib/db-service";
 import { Button } from "@/components/ui/button";
 import { Loader2, Download, ArrowRight, Calendar, MapPin, Users, CheckCircle } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -38,9 +38,11 @@ export default function AcceptancePage() {
 
     const handleConfirm = async () => {
         if (!user) return;
+        const uid = user.uid || user.id;
         setLoading(true);
         try {
-            await mockApi.advanceApplicationStatus(user.id);
+            // Confirm enrollment by advancing status from decision_released -> enrolled
+            await dbService.advanceStatus(uid, 'decision_released');
             // After confirm, go back to dashboard to see new state
             router.push('/dashboard');
         } finally {
@@ -68,23 +70,7 @@ export default function AcceptancePage() {
                 ))}
             </div>
 
-            <header className="relative z-10 w-full border-b border-primary/10 bg-white/80 backdrop-blur-md px-6 py-4">
-                <div className="mx-auto flex max-w-7xl items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-white">
-                            <span className="font-bold text-xl">J</span>
-                        </div>
-                        <h1 className="text-lg font-bold tracking-tight text-primary">Jianshan Summer Camp</h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="hidden sm:flex items-center gap-2 text-sm text-primary/70">
-                            <Users className="h-4 w-4" />
-                            <span>{user.name}</span>
-                        </div>
-                        <button onClick={() => logout()} className="text-sm font-semibold text-primary hover:text-accent transition-colors">Log Out</button>
-                    </div>
-                </div>
-            </header>
+
 
             <main className="relative z-10 flex flex-1 flex-col sm:flex-row max-w-7xl mx-auto w-full p-0 sm:p-6 lg:p-8">
                 <div className="hidden sm:flex flex-1 min-h-full rounded-l-xl overflow-hidden shadow-lg ring-1 ring-black/5 relative">
@@ -152,21 +138,21 @@ export default function AcceptancePage() {
                         </div>
                     </div>
 
-                    <div className="mt-12 flex flex-col items-center gap-4 border-t border-primary/10 pt-8 sm:flex-row sm:justify-center">
+                    <div className="mt-12 flex flex-col items-center gap-8 border-t border-primary/10 pt-8 sm:flex-row sm:justify-center">
+                        <Button
+                            variant="ghost"
+                            className="h-auto w-auto min-w-0 p-0 border-0 bg-transparent hover:bg-transparent text-primary hover:text-primary shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        >
+                            Decline Offer
+                        </Button>
                         <Button
                             onClick={handleConfirm}
                             disabled={loading}
-                            className="h-12 w-full min-w-[200px] bg-primary text-white hover:bg-primary/90 text-base font-bold shadow-md sm:w-auto"
+                            className="h-12 w-full min-w-[200px] bg-primary text-white hover:bg-primary/90 text-base font-bold shadow-md sm:w-auto border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                         >
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Confirm Enrollment
                             <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-12 w-full min-w-[160px] border-transparent bg-transparent text-primary hover:bg-primary/5 sm:w-auto"
-                        >
-                            Decline Offer
                         </Button>
                     </div>
                 </div>
