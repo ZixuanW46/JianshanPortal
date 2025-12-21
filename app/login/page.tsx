@@ -14,16 +14,22 @@ export default function LoginPage() {
     const { login } = useAuth();
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError("");
         try {
-            await login(email);
+            await login(email, password);
             // Router redirect handled in page.tsx usually, but here we can push
             router.push("/dashboard");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Login failed", error);
+            // Customize error message based on common auth errors if needed
+            // Default to a user-friendly message for invalid credentials
+            setError("Invalid username or password. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -98,14 +104,20 @@ export default function LoginPage() {
                             </p>
                         </div>
 
+                        {error && (
+                            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-md text-sm font-medium">
+                                {error}
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                             <div className="grid gap-2">
                                 <Label htmlFor="email" className="font-semibold text-primary">Username or Email</Label>
                                 <div className="relative">
                                     <Input
                                         id="email"
-                                        type="email"
-                                        placeholder="name@example.com"
+                                        type="text"
+                                        placeholder="Username or Email"
                                         className="pl-11 h-12 border-input bg-background focus-visible:ring-accent"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -127,7 +139,8 @@ export default function LoginPage() {
                                         type="password"
                                         placeholder="Enter your password"
                                         className="pl-11 h-12 border-input bg-background focus-visible:ring-accent"
-                                        defaultValue="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                     />
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                                 </div>
