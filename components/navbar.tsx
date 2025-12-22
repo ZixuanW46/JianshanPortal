@@ -19,7 +19,7 @@ export function Navbar() {
     // Based on provided designs, they have their own headers.
     // Let's exclude Navbar from /login, /register, /welcome, /acceptance.
     const hiddenPaths = ['/login', '/register'];
-    if (hiddenPaths.includes(pathname)) return null;
+    if (hiddenPaths.some(path => pathname === path || pathname === `${path}/`)) return null;
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-white">

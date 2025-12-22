@@ -7,7 +7,8 @@ export function Footer() {
 
     // Hide footer on specific standalone pages
     const hiddenPaths = ['/login', '/register', '/welcome', '/acceptance'];
-    if (hiddenPaths.includes(pathname)) return null;
+    // Handle trailing slashes likely caused by trailingSlash: true in next.config.ts
+    if (hiddenPaths.some(path => pathname === path || pathname === `${path}/`)) return null;
 
     return (
         <footer className="border-t bg-white">

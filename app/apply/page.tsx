@@ -41,37 +41,27 @@ export default function ApplyPage() {
 
             try {
                 // Use cloud DB service
+                // This now THROWS on permission error, and returns NULL on clean "not found".
                 let myApp = await dbService.getMyApplication(uid);
 
                 if (!myApp) {
                     console.log("No application found. Creating new draft for:", uid);
-                    try {
-                        // Create initial draft in DB
-                        myApp = await dbService.createApplication(uid);
-                        console.log("Created new application:", myApp);
-                    } catch (createErr: any) {
-                        // Handle race condition: If create fails because it already exists (DuplicateWrite),
-                        // it means another request (or strict mode double-effect) just created it.
-                        if (createErr.message && createErr.message.includes('DuplicateWrite')) {
-                            console.warn("DuplicateWrite detected (likely race condition). Retrying fetch...");
-                            // Add a small delay to ensure consistency
-                            await new Promise(r => setTimeout(r, 500));
-                            myApp = await dbService.getMyApplication(uid);
-                            if (!myApp) {
-                                // If still stuck, then it's a real issue (e.g. permissions)
-                                throw new Error("Application exists but cannot be read (Permission Issue).");
-                            }
-                        } else {
-                            throw createErr;
-                        }
-                    }
+                    // createApplication uses .set(id), so it is idempotent.
+                    // If two requests hit this, they write the same data to the same ID. No duplicates.
+                    myApp = await dbService.createApplication(uid);
+                    console.log("Created new application:", myApp);
                 } else {
                     console.log("Found existing application:", myApp);
                 }
                 setApp(myApp);
             } catch (err: any) {
                 console.error("Error fetching/creating application:", err);
-                alert("Failed to load application. " + (err.message || "Unknown error"));
+                // If permission denied, explicit alert
+                if (err.code === 'DATABASE_PERMISSION_DENIED' || (err.message && err.message.includes('permission'))) {
+                    alert("Database Permission Denied. Please contact administrator (Check Console).");
+                } else {
+                    alert("Failed to load application. " + (err.message || "Unknown error"));
+                }
             } finally {
                 setLoading(false);
             }

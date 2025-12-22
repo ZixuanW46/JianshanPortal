@@ -36,9 +36,9 @@
 - [静态托管](https://tcb.cloud.tencent.com/dev?envId=cloud1-6gfr24p5f5b51c80#/hosting)
 
 ### 最新部署
-- **部署时间**: 2025-12-22 11:03 (UTC+8)
-- **托管域名**: [cloud1-6gfr24p5f5b51c80-1392727235.tcloudbaseapp.com](https://cloud1-6gfr24p5f5b51c80-1392727235.tcloudbaseapp.com/?t=20251222)
-- **说明**: 本次通过 CloudBase 静态托管上传 `out/` 目录产物，如需刷新 CDN 可重新附加随机查询参数
+- **部署时间**: 2025-12-22 12:22 (UTC+8)
+- **托管域名**: [cloud1-6gfr24p5f5b51c80-1392727235.tcloudbaseapp.com/sites/jianshan-app-portal-20251222](https://cloud1-6gfr24p5f5b51c80-1392727235.tcloudbaseapp.com/sites/jianshan-app-portal-20251222/?t=20251222-1222)
+- **说明**: 通过 `npm run build` 生成 `out/` 并上传至 CloudBase 静态托管 `sites/jianshan-app-portal-20251222/` 子目录，若需刷新 CDN 请追加任意随机查询参数
 
 ## 本地开发
 
@@ -101,9 +101,22 @@ const nextConfig: NextConfig = {
 npm run build
 ```
 
-3. 使用 AI 工具部署到静态托管:
+3. 使用 CloudBase CLI 部署（推荐）:
+
+在确认已安装 CloudBase CLI (`npm i -g @cloudbase/cli`) 并登录 (`tcb login`) 后，执行以下命令将 `out` 目录部署到环境根目录：
+
+```bash
+tcb hosting deploy ./out -e cloud1-6gfr24p5f5b51c80
 ```
-请帮我部署到 CloudBase 静态托管
+
+> 提示：如果只需部署到子目录（如 `/app`），可以将命令修改为 `tcb hosting deploy ./out /app -e cloud1-6gfr24p5f5b51c80`。
+
+### 方法三：使用 cloudbaserc.json 配置部署
+
+项目根目录已包含 `cloudbaserc.json` 配置文件。可以直接运行：
+
+```bash
+tcb hosting deploy
 ```
 
 ### 方法二：CloudRun 容器部署

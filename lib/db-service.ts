@@ -39,45 +39,45 @@ export const dbService = {
     async getMyApplication(userId: string): Promise<Application | null> {
         if (!db) return null;
         console.log("[db-service] getMyApplication calling with:", userId);
-        try {
-            const res = await db.collection(COLLECTION)
-                .where({
-                    userId: userId
-                })
-                .get();
 
-            console.log("[db-service] getMyApplication res:", res);
+        // Removed try-catch to allow legitimate DB errors (network, permission) to bubble up.
+        // We only want to return null if the query successfully returns 0 results.
+        const res = await db.collection(COLLECTION)
+            .where({
+                userId: userId
+            })
+            .get();
 
-            if (res.data && res.data.length > 0) {
-                // Map DB data to Application type
-                const data = res.data[0] as DBApplication;
+        console.log("[db-service] getMyApplication res:", res);
 
-                // Return full structure expected by UI, filling defaults for missing fields
-                return {
-                    id: data._id as string,
-                    userId: data.userId,
-                    status: data.status,
-                    submittedAt: data.timeline?.submittedAt,
-                    lastUpdatedAt: data.lastUpdatedAt,
-                    personalInfo: {
-                        firstName: data.personalInfo?.firstName || '',
-                        lastName: data.personalInfo?.lastName || '',
-                        phone: data.personalInfo?.phone || '',
-                        wechatId: data.personalInfo?.wechatId || '',
-                        school: data.personalInfo?.school || '',
-                        grade: data.personalInfo?.grade || ''
-                    },
-                    essays: {
-                        question1: data.essays?.question1 || '',
-                        question2: data.essays?.question2 || ''
-                    }
-                } as Application;
-            }
-            return null;
-        } catch (error) {
-            console.error("Failed to get application:", error);
-            return null;
+        if (res.data && res.data.length > 0) {
+            // Map DB data to Application type
+            const data = res.data[0] as DBApplication;
+
+            // Return full structure expected by UI, filling defaults for missing fields
+            return {
+                id: data._id as string,
+                userId: data.userId,
+                status: data.status,
+                submittedAt: data.timeline?.submittedAt,
+                lastUpdatedAt: data.lastUpdatedAt,
+                personalInfo: {
+                    firstName: data.personalInfo?.firstName || '',
+                    lastName: data.personalInfo?.lastName || '',
+                    phone: data.personalInfo?.phone || '',
+                    wechatId: data.personalInfo?.wechatId || '',
+                    school: data.personalInfo?.school || '',
+                    grade: data.personalInfo?.grade || ''
+                },
+                essays: {
+                    question1: data.essays?.question1 || '',
+                    question2: data.essays?.question2 || ''
+                }
+            } as Application;
         }
+
+        // Only return null if we successfully queried and found nothing
+        return null;
     },
 
     // Create a new draft application
@@ -86,7 +86,8 @@ export const dbService = {
         console.log("[db-service] creating application for user:", userId);
 
         const timestamp = new Date().toISOString();
-        const initialData: Partial<DBApplication> = {
+        // Do NOT include _id in the data payload for set(), as it's defined by doc(id)
+        const initialData: Omit<DBApplication, '_id'> = {
             userId,
             status: 'draft',
             personalInfo: {
@@ -103,26 +104,22 @@ export const dbService = {
         };
 
         try {
-            const res = await db.collection(COLLECTION).add(initialData);
+            // Use .doc(userId).set() instead of .add()
+            const res = await db.collection(COLLECTION).doc(userId).set(initialData);
             console.log("[db-service] created application result:", res);
 
-            // CloudBase SDK v1/v2 sometimes returns an error object instead of throwing
-            if ((res as any).code || !(res as any).id) {
+            // CloudBase SDK sanity check: sometimes it returns an object with 'code' on failure instead of throwing
+            if ((res as any).code) {
                 throw new Error(`CloudBase Create Failed: ${(res as any).code} - ${(res as any).message}`);
             }
 
             // Return structured data
             return {
-                id: (res as any).id as string, // CloudBase returns 'id' usually on add
+                id: userId,
                 ...initialData as any
             };
         } catch (e: any) {
-            // If duplicate write, just warn, don't error, as UI handles it
-            if (e.message && e.message.includes('DuplicateWrite')) {
-                console.warn("[db-service] create application race condition (DuplicateWrite), allowing UI to retry.");
-            } else {
-                console.error("[db-service] create application failed:", e);
-            }
+            console.error("[db-service] create application failed:", e);
             throw e;
         }
     },
