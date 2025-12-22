@@ -35,6 +35,11 @@
 - [身份认证](https://tcb.cloud.tencent.com/dev?envId=cloud1-6gfr24p5f5b51c80#/identity)
 - [静态托管](https://tcb.cloud.tencent.com/dev?envId=cloud1-6gfr24p5f5b51c80#/hosting)
 
+### 最新部署
+- **部署时间**: 2025-12-22 11:03 (UTC+8)
+- **托管域名**: [cloud1-6gfr24p5f5b51c80-1392727235.tcloudbaseapp.com](https://cloud1-6gfr24p5f5b51c80-1392727235.tcloudbaseapp.com/?t=20251222)
+- **说明**: 本次通过 CloudBase 静态托管上传 `out/` 目录产物，如需刷新 CDN 可重新附加随机查询参数
+
 ## 本地开发
 
 ### 安装依赖

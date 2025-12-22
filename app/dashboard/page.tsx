@@ -287,7 +287,8 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchApp = async () => {
             if (!user) return;
-            const uid = user.uid || user.id;
+            const uid = user.uid || user.id || user._id;
+            console.log("Dashboard fetching app for:", uid);
             try {
                 const myApp = await dbService.getMyApplication(uid);
                 setApp(myApp);
@@ -299,23 +300,24 @@ export default function DashboardPage() {
                 // But welcome says "Registration Complete".
                 // If myApp is null, we should probably redirect to welcome or show "Empty".
                 if (!myApp) {
+                    console.log("No app found on dashboard, redirecting to welcome");
                     router.replace("/welcome");
                     return;
                 }
             } catch (err) {
-                console.error(err);
+                console.error("Dashboard fetch error:", err);
             } finally {
                 setLoading(false);
             }
         };
-        if (user) fetchApp();
+        fetchApp();
     }, [user, router]);
 
     // Helper to advance state for demo
     const handleAdvance = async () => {
         if (!user || !app) return;
         setLoading(true);
-        const uid = user.uid || user.id;
+        const uid = user.uid || user.id || user._id;
         try {
             await dbService.advanceStatus(uid, app.status);
             // Re-fetch to see changes
@@ -479,7 +481,7 @@ export default function DashboardPage() {
                         */}
                         <Button onClick={async () => {
                             if (!user) return;
-                            const uid = user.uid || user.id;
+                            const uid = user.uid || user.id || user._id;
                             setLoading(true);
                             await dbService.resetApplication(uid);
                             router.push("/welcome");

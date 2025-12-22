@@ -38,12 +38,15 @@ export const dbService = {
     // Get user's application
     async getMyApplication(userId: string): Promise<Application | null> {
         if (!db) return null;
+        console.log("[db-service] getMyApplication calling with:", userId);
         try {
             const res = await db.collection(COLLECTION)
                 .where({
                     userId: userId
                 })
                 .get();
+
+            console.log("[db-service] getMyApplication res:", res);
 
             if (res.data && res.data.length > 0) {
                 // Map DB data to Application type
@@ -80,29 +83,54 @@ export const dbService = {
     // Create a new draft application
     async createApplication(userId: string): Promise<Application> {
         if (!db) throw new Error("DB not initialized");
+        console.log("[db-service] creating application for user:", userId);
 
         const timestamp = new Date().toISOString();
         const initialData: Partial<DBApplication> = {
             userId,
             status: 'draft',
-            personalInfo: { firstName: '', lastName: '' },
+            personalInfo: {
+                firstName: '',
+                lastName: '',
+                phone: '',
+                wechatId: '',
+                school: '',
+                grade: ''
+            },
             timeline: { registeredAt: timestamp },
             lastUpdatedAt: timestamp,
             essays: { question1: '', question2: '' }
         };
 
-        const res = await db.collection(COLLECTION).add(initialData);
+        try {
+            const res = await db.collection(COLLECTION).add(initialData);
+            console.log("[db-service] created application result:", res);
 
-        // Return structured data
-        return {
-            id: (res as any).id as string, // CloudBase returns 'id' usually on add
-            ...initialData as any
-        };
+            // CloudBase SDK v1/v2 sometimes returns an error object instead of throwing
+            if ((res as any).code || !(res as any).id) {
+                throw new Error(`CloudBase Create Failed: ${(res as any).code} - ${(res as any).message}`);
+            }
+
+            // Return structured data
+            return {
+                id: (res as any).id as string, // CloudBase returns 'id' usually on add
+                ...initialData as any
+            };
+        } catch (e: any) {
+            // If duplicate write, just warn, don't error, as UI handles it
+            if (e.message && e.message.includes('DuplicateWrite')) {
+                console.warn("[db-service] create application race condition (DuplicateWrite), allowing UI to retry.");
+            } else {
+                console.error("[db-service] create application failed:", e);
+            }
+            throw e;
+        }
     },
 
     // Save only allowed fields (First/Last Name) + LastUpdated
     async saveApplication(userId: string, data: Partial<Application>) {
         if (!db) return;
+        console.log("[db-service] saving application for:", userId, data);
 
         // We first need to find the doc ID or use where clause
         // CloudBase safer to update by ID if known, or WHERE if unique. WHERE is easier here.
@@ -128,23 +156,36 @@ export const dbService = {
             essays: data.essays
         };
 
-        await db.collection(COLLECTION)
-            .where({ userId: userId })
-            .update(updates);
+        try {
+            const res = await db.collection(COLLECTION)
+                .where({ userId: userId })
+                .update(updates);
+            console.log("[db-service] save result:", res);
+        } catch (e) {
+            console.error("[db-service] save failed:", e);
+            throw e;
+        }
     },
 
     // Submit: Change status, add submittedAt
     async submitApplication(userId: string) {
         if (!db) return;
+        console.log("[db-service] submitting application for:", userId);
         const timestamp = new Date().toISOString();
 
-        await db.collection(COLLECTION)
-            .where({ userId: userId })
-            .update({
-                status: 'under_review',
-                lastUpdatedAt: timestamp,
-                'timeline.submittedAt': timestamp
-            });
+        try {
+            const res = await db.collection(COLLECTION)
+                .where({ userId: userId })
+                .update({
+                    status: 'under_review',
+                    lastUpdatedAt: timestamp,
+                    'timeline.submittedAt': timestamp
+                });
+            console.log("[db-service] submit result:", res);
+        } catch (e) {
+            console.error("[db-service] submit failed:", e);
+            throw e;
+        }
     },
 
     // Dev Tool: Advance Status

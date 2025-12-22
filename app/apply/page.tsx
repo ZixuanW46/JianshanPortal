@@ -33,26 +33,50 @@ export default function ApplyPage() {
     useEffect(() => {
         const fetchApp = async () => {
             if (!user) return;
+            // Standardize ID usage. CloudBase 'user' typically has 'uid'.
+            // Fallback to 'id' or '_id' if needed, but 'uid' is best for consistency with auth.
+            const uid = user.uid || user.id || user._id; // Ensure we get a valid string
+
+            console.log("Fetching application for user:", uid);
+
             try {
                 // Use cloud DB service
-                let myApp = await dbService.getMyApplication(user.userId || user.uid || user._id); // Handle CloudBase user object differences?
-
-                // CloudBase auth user object usually has `uid`
-                // Let's use `user.uid` as standard key if available, else fallback.
-                const uid = user.uid || user.id;
+                let myApp = await dbService.getMyApplication(uid);
 
                 if (!myApp) {
-                    // Create initial draft in DB
-                    myApp = await dbService.createApplication(uid);
+                    console.log("No application found. Creating new draft for:", uid);
+                    try {
+                        // Create initial draft in DB
+                        myApp = await dbService.createApplication(uid);
+                        console.log("Created new application:", myApp);
+                    } catch (createErr: any) {
+                        // Handle race condition: If create fails because it already exists (DuplicateWrite),
+                        // it means another request (or strict mode double-effect) just created it.
+                        if (createErr.message && createErr.message.includes('DuplicateWrite')) {
+                            console.warn("DuplicateWrite detected (likely race condition). Retrying fetch...");
+                            // Add a small delay to ensure consistency
+                            await new Promise(r => setTimeout(r, 500));
+                            myApp = await dbService.getMyApplication(uid);
+                            if (!myApp) {
+                                // If still stuck, then it's a real issue (e.g. permissions)
+                                throw new Error("Application exists but cannot be read (Permission Issue).");
+                            }
+                        } else {
+                            throw createErr;
+                        }
+                    }
+                } else {
+                    console.log("Found existing application:", myApp);
                 }
                 setApp(myApp);
-            } catch (err) {
-                console.error(err);
+            } catch (err: any) {
+                console.error("Error fetching/creating application:", err);
+                alert("Failed to load application. " + (err.message || "Unknown error"));
             } finally {
                 setLoading(false);
             }
         };
-        if (user) fetchApp();
+        fetchApp(); // Don't wait for 'if (user)' inside effect, check inside func but trigger on [user]
     }, [user]);
 
     // Handle Input Change (Deep update helper)
@@ -77,11 +101,16 @@ export default function ApplyPage() {
 
     const handleSave = async () => {
         if (!user || !app) return;
-        const uid = user.uid || user.id;
+        const uid = user.uid || user.id || user._id;
+        console.log("Saving draft for:", uid);
         setSaving(true);
         try {
             await dbService.saveApplication(uid, app);
+            console.log("Draft saved successfully");
             router.push("/dashboard");
+        } catch (err) {
+            console.error("Failed to save draft:", err);
+            alert("Failed to save draft. Please try again.");
         } finally {
             setSaving(false);
         }
@@ -90,14 +119,19 @@ export default function ApplyPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !app) return;
-        const uid = user.uid || user.id;
+        const uid = user.uid || user.id || user._id;
+        console.log("Submitting application for:", uid);
         setSaving(true);
         try {
             // Perform validation here if needed
             // Also ensure latest data is saved before submit status change
             await dbService.saveApplication(uid, app);
             await dbService.submitApplication(uid);
+            console.log("Application submitted successfully");
             router.push("/dashboard");
+        } catch (err) {
+            console.error("Failed to submit application:", err);
+            alert("Failed to submit application. Please try again or contact support.");
         } finally {
             setSaving(false);
         }
