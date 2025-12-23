@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
-import { DBApplication } from "@/lib/db-service";
-import { Search, Eye } from "lucide-react";
+import { dbService, DBApplication } from "@/lib/db-service";
+import { Search, Eye, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AdminApplicationTableProps {
     applications: DBApplication[];
@@ -19,6 +20,9 @@ interface AdminApplicationTableProps {
 export function AdminApplicationTable({ applications }: AdminApplicationTableProps) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [decisionFilter, setDecisionFilter] = useState("all");
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [releasing, setReleasing] = useState(false);
 
     // Filter logic
     const safeApps = applications || [];
@@ -29,8 +33,77 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
 
         const statusMatch = statusFilter === "all" || app.status === statusFilter;
 
-        return nameMatch && statusMatch;
+        let decisionMatch = true;
+        if (decisionFilter === "all") {
+            decisionMatch = true;
+        } else if (decisionFilter === "undecided") {
+            decisionMatch = !app.adminData?.internalDecision;
+        } else {
+            decisionMatch = app.adminData?.internalDecision === decisionFilter;
+        }
+
+        return nameMatch && statusMatch && decisionMatch;
+        return nameMatch && statusMatch && decisionMatch;
     });
+
+    // Valid for release: Status is 'under_review' AND has internal decision
+    const isEligibleForRelease = (app: DBApplication) => {
+        return app.status === 'under_review' && !!app.adminData?.internalDecision;
+    };
+
+    const eligibleApps = filteredApps.filter(isEligibleForRelease);
+    const isAllSelected = eligibleApps.length > 0 && eligibleApps.every(app => selectedIds.has(app.userId));
+
+    const toggleSelectAll = () => {
+        if (isAllSelected) {
+            setSelectedIds(new Set());
+        } else {
+            const newSet = new Set<string>();
+            // Only select eligible apps
+            eligibleApps.forEach(app => newSet.add(app.userId));
+            setSelectedIds(newSet);
+        }
+    };
+
+    const toggleSelectRow = (userId: string) => {
+        const newSet = new Set(selectedIds);
+        if (newSet.has(userId)) {
+            newSet.delete(userId);
+        } else {
+            newSet.add(userId);
+        }
+        setSelectedIds(newSet);
+    };
+
+    const handleBatchRelease = async () => {
+        if (selectedIds.size === 0) return;
+        if (!confirm(`Are you sure you want to release decisions for ${selectedIds.size} applicants?`)) return;
+
+        setReleasing(true);
+        try {
+            const results = await Promise.allSettled(
+                Array.from(selectedIds).map(id => dbService.releaseResult(id))
+            );
+
+            // Check for errors
+            const errors = results.filter(r => r.status === 'rejected');
+            if (errors.length > 0) {
+                console.error("Some releases failed:", errors);
+                alert(`Released with ${errors.length} errors. Check console.`);
+            } else {
+                alert("Decisions released successfully!");
+            }
+
+            // Reset and reload
+            setSelectedIds(new Set());
+            window.location.reload();
+        } catch (error) {
+            console.error("Batch release failed completely:", error);
+            alert("Batch release failed. Check console.");
+        } finally {
+            setReleasing(false);
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -45,22 +118,49 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <div className="w-full sm:w-48">
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Filter Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="submitted">Submitted</SelectItem>
-                            <SelectItem value="under_review">Under Review</SelectItem>
-                            <SelectItem value="decision_released">Decision Released</SelectItem>
-                            <SelectItem value="enrolled">Enrolled</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                            <SelectItem value="waitlisted">Waitlisted</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="flex gap-2 w-full sm:w-auto items-center">
+                    {selectedIds.size > 0 && (
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleBatchRelease}
+                            disabled={releasing}
+                        >
+                            {releasing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                            Release Decisions ({selectedIds.size})
+                        </Button>
+                    )}
+                    <div className="w-full sm:w-48">
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Filter Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="draft">Draft</SelectItem>
+                                <SelectItem value="submitted">Submitted</SelectItem>
+                                <SelectItem value="under_review">Under Review</SelectItem>
+                                <SelectItem value="decision_released">Decision Released</SelectItem>
+                                <SelectItem value="enrolled">Enrolled</SelectItem>
+                                <SelectItem value="rejected">Rejected</SelectItem>
+                                <SelectItem value="waitlisted">Waitlisted</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="w-full sm:w-48">
+                        <Select value={decisionFilter} onValueChange={setDecisionFilter}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Internal Decision" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Decisions</SelectItem>
+                                <SelectItem value="undecided">Undecided</SelectItem>
+                                <SelectItem value="accepted">Accepted</SelectItem>
+                                <SelectItem value="rejected">Rejected</SelectItem>
+                                <SelectItem value="waitlisted">Waitlisted</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
 
@@ -69,8 +169,17 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-12">
+                                <Checkbox
+                                    checked={isAllSelected}
+                                    onCheckedChange={toggleSelectAll}
+                                    disabled={eligibleApps.length === 0}
+                                    aria-label="Select all eligible"
+                                />
+                            </TableHead>
                             <TableHead>Applicant</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Internal Decision</TableHead>
                             <TableHead>Registered At</TableHead>
                             <TableHead>Last Updated</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -79,13 +188,21 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                     <TableBody>
                         {filteredApps.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
+                                <TableCell colSpan={7} className="h-24 text-center">
                                     No results found.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             filteredApps.map((app) => (
                                 <TableRow key={app.userId}>
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={selectedIds.has(app.userId)}
+                                            onCheckedChange={() => toggleSelectRow(app.userId)}
+                                            aria-label={`Select ${app.personalInfo?.lastName}`}
+                                            disabled={!isEligibleForRelease(app)}
+                                        />
+                                    </TableCell>
                                     <TableCell className="font-medium">
                                         {app.personalInfo?.lastName} {app.personalInfo?.firstName}
                                         <br />
@@ -93,6 +210,15 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                     </TableCell>
                                     <TableCell>
                                         <StatusBadge status={app.status} />
+                                    </TableCell>
+                                    <TableCell>
+                                        {app.adminData?.internalDecision ? (
+                                            <span className="capitalize font-medium text-sm">
+                                                {app.adminData.internalDecision}
+                                            </span>
+                                        ) : (
+                                            <span className="text-muted-foreground text-sm">-</span>
+                                        )}
                                     </TableCell>
                                     <TableCell>{new Date(app.timeline?.registeredAt || "").toLocaleDateString()}</TableCell>
                                     <TableCell>{new Date(app.lastUpdatedAt || "").toLocaleDateString()}</TableCell>
