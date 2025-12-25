@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -23,14 +24,19 @@ export function Navbar() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-white">
-            <div className="container px-4 md:px-8 flex h-16 items-center justify-between mx-auto max-w-7xl">
+            <div className="container px-4 md:px-8 flex h-18 items-center justify-between mx-auto max-w-7xl">
                 <div className="flex items-center gap-2 md:gap-4">
                     <Link href={isAdmin ? "/admin/dashboard" : "/"} className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                            <Tent className="h-5 w-5" />
-                        </div>
-                        <span className="font-bold text-lg text-foreground">
-                            {isAdmin ? "Admin Portal" : "Jianshan Academy"}
+                        <Image
+                            src="/logo_black.png"
+                            alt="Jianshan Academy Logo"
+                            width={32}
+                            height={32}
+                            className="h-13 w-auto"
+                        />
+                        <div className="h-6 w-px bg-gray-300 mx-2" />
+                        <span className="font-medium text-lg text-foreground">
+                            {isAdmin ? "Admin Portal" : "Student Portal"}
                         </span>
                     </Link>
                 </div>

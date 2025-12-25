@@ -271,17 +271,22 @@ function ApplicationDetails({ app, user }: { app: Application, user: any }) {
 }
 
 export default function DashboardPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, isAdmin } = useAuth();
     const router = useRouter();
     const [app, setApp] = useState<Application | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Initial auth check
+    // Initial auth check checks
     useEffect(() => {
-        if (!authLoading && !user) {
-            router.push("/login");
+        if (!authLoading) {
+            if (!user) {
+                router.push("/login");
+            } else if (isAdmin) {
+                // Admin redirect
+                router.replace("/admin/dashboard");
+            }
         }
-    }, [authLoading, user, router]);
+    }, [authLoading, user, isAdmin, router]);
 
     // Data Load
     useEffect(() => {

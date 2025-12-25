@@ -53,8 +53,8 @@ export default function AdminDashboardPage() {
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Header */}
-            <div className="bg-white border-b py-8 px-4 md:px-8">
-                <div className="container mx-auto max-w-7xl">
+            <div className="bg-white border-b py-8">
+                <div className="container mx-auto max-w-7xl px-4 md:px-8">
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">Admin Dashboard</h1>
                     <p className="text-muted-foreground mt-2">Manage applications and view student status.</p>
                 </div>
