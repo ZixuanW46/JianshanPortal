@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { dbService, DBApplication } from "@/lib/db-service";
+import { DashboardStats } from "@/components/admin/dashboard-stats";
 import { AdminApplicationTable } from "@/components/admin/application-table";
 import { Loader2 } from "lucide-react";
 
@@ -60,7 +61,8 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Main Content */}
-            <div className="container mx-auto max-w-7xl px-4 md:px-8 py-8">
+            <div className="container mx-auto max-w-7xl px-4 md:px-8 py-8 space-y-8">
+                <DashboardStats applications={applications} />
                 <AdminApplicationTable applications={applications} />
             </div>
         </div>

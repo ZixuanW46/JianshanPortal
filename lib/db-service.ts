@@ -278,7 +278,7 @@ export const dbService = {
     },
 
     // Admin: Set Internal Decision (does not notify user)
-    async setInternalDecision(userId: string, decision: 'accepted' | 'rejected' | 'waitlisted') {
+    async setInternalDecision(userId: string, decision: 'accepted' | 'rejected' | 'waitlisted' | null) {
         if (!db) return;
 
         const timestamp = new Date().toISOString();
