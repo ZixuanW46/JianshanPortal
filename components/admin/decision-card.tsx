@@ -1,12 +1,6 @@
-"use client"
-
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dbService } from "@/lib/db-service";
-import { Loader2, AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
-
+import { Loader2, CheckCircle, XCircle, Clock, Send, Info, RotateCcw } from "lucide-react";
 
 interface DecisionCardProps {
     applicationId: string;
@@ -15,15 +9,15 @@ interface DecisionCardProps {
     onUpdate: () => void;
 }
 
+type DecisionType = 'accepted' | 'rejected' | 'waitlisted';
+
 export function DecisionCard({ applicationId, currentInternalDecision, currentPublicStatus, onUpdate }: DecisionCardProps) {
     const [loading, setLoading] = useState(false);
-    const [selectedDecision, setSelectedDecision] = useState<string>(currentInternalDecision || "");
 
-    const handleSaveDecision = async (decision: string) => {
+    const handleSaveDecision = async (decision: string | null) => {
         setLoading(true);
         try {
             await dbService.setInternalDecision(applicationId, decision as any);
-            setSelectedDecision(decision);
             onUpdate();
         } catch (e) {
             console.error("Failed to save decision", e);
@@ -50,92 +44,160 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
 
     const isReleased = ['decision_released', 'enrolled', 'rejected', 'waitlisted'].includes(currentPublicStatus) && currentPublicStatus !== 'under_review';
 
-    // Determine badge color for internal decision
-    let decisionColor = "text-gray-500";
-    if (currentInternalDecision === 'accepted') decisionColor = "text-green-600";
-    if (currentInternalDecision === 'rejected') decisionColor = "text-red-600";
-    if (currentInternalDecision === 'waitlisted') decisionColor = "text-orange-600";
+    const decisionButtons = [
+        {
+            type: 'accepted' as DecisionType,
+            label: 'Accept',
+            icon: CheckCircle,
+            activeColor: 'bg-green-500 text-white border-green-500',
+            inactiveColor: 'bg-white text-slate-700 border-slate-200 hover:border-green-500 hover:bg-green-50'
+        },
+        {
+            type: 'rejected' as DecisionType,
+            label: 'Reject',
+            icon: XCircle,
+            activeColor: 'bg-red-500 text-white border-red-500',
+            inactiveColor: 'bg-white text-slate-700 border-slate-200 hover:border-red-500 hover:bg-red-50'
+        },
+        {
+            type: 'waitlisted' as DecisionType,
+            label: 'Waitlist',
+            icon: Clock,
+            activeColor: 'bg-amber-500 text-white border-amber-500',
+            inactiveColor: 'bg-white text-slate-700 border-slate-200 hover:border-amber-500 hover:bg-amber-50'
+        }
+    ];
+
+    const getDecisionBadgeColor = () => {
+        switch (currentInternalDecision) {
+            case 'accepted':
+                return 'bg-green-100 text-green-700 border-green-200';
+            case 'rejected':
+                return 'bg-red-100 text-red-700 border-red-200';
+            case 'waitlisted':
+                return 'bg-amber-100 text-amber-700 border-amber-200';
+            default:
+                return 'bg-slate-100 text-slate-700 border-slate-200';
+        }
+    };
 
     return (
-        <Card className="border-l-4 border-l-blue-500">
-            <CardHeader>
-                <CardTitle className="text-lg">Decision Management</CardTitle>
-                <CardDescription>Mark decision internally, then release to applicant.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+            {/* Header */}
+            <div className="mb-6">
+                <h2 className="text-slate-900 font-bold text-lg mb-1">Decision Management</h2>
+                <p className="text-slate-600 text-sm">
+                    Mark decision internally, then release to applicant.
+                </p>
+            </div>
 
-                {/* Step 1: Internal Marking */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Internal Decision Marking</label>
-                    <div className="flex gap-2 flex-wrap">
-                        <Button
-                            variant={currentInternalDecision === 'accepted' ? "default" : "outline"}
-                            className={currentInternalDecision === 'accepted' ? "bg-green-600 hover:bg-green-700" : "hover:text-green-600 hover:border-green-600"}
-                            size="sm"
-                            disabled={loading || isReleased}
-                            onClick={() => handleSaveDecision('accepted')}
-                        >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Accept
-                        </Button>
-                        <Button
-                            variant={currentInternalDecision === 'rejected' ? "default" : "outline"}
-                            className={currentInternalDecision === 'rejected' ? "bg-red-600 hover:bg-red-700" : "hover:text-red-600 hover:border-red-600"}
-                            size="sm"
-                            disabled={loading || isReleased}
-                            onClick={() => handleSaveDecision('rejected')}
-                        >
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Reject
-                        </Button>
-                        <Button
-                            variant={currentInternalDecision === 'waitlisted' ? "default" : "outline"}
-                            className={currentInternalDecision === 'waitlisted' ? "bg-orange-500 hover:bg-orange-600" : "hover:text-orange-500 hover:border-orange-500"}
-                            size="sm"
-                            disabled={loading || isReleased}
-                            onClick={() => handleSaveDecision('waitlisted')}
-                        >
-                            <Clock className="mr-2 h-4 w-4" />
-                            Waitlist
-                        </Button>
+            {/* Internal Decision Marking */}
+            <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-slate-700 font-medium text-sm">Internal Decision Marking</h3>
+                    <div className="group relative">
+                        <Info className="w-4 h-4 text-slate-400 cursor-help" />
+                        <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-48 bg-slate-900 text-white text-xs rounded-lg px-3 py-2 z-10 shadow-lg">
+                            Select a decision. It won't be visible to the applicant until released.
+                            <div className="absolute -bottom-1 left-1 w-2 h-2 bg-slate-900 transform rotate-45"></div>
+                        </div>
                     </div>
-                    {currentInternalDecision && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Current Internal Mark: <span className={`font-bold uppercase ${decisionColor}`}>{currentInternalDecision}</span>
-                        </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                    {decisionButtons.map((button) => {
+                        const Icon = button.icon;
+                        const isActive = currentInternalDecision === button.type;
+                        return (
+                            <button
+                                key={button.type}
+                                onClick={() => !isReleased && handleSaveDecision(button.type)}
+                                disabled={loading || isReleased}
+                                className={`flex flex-col items-center gap-2 px-2 py-3 rounded-xl border-2 transition-all duration-200 ${isActive ? button.activeColor : button.inactiveColor
+                                    } ${isActive ? 'shadow-md scale-105' : 'hover:shadow-sm'} ${isReleased ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                <Icon className="w-5 h-5" />
+                                <span className="text-sm font-medium">{button.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Current Decision Badge */}
+                {currentInternalDecision && (
+                    <div className="flex items-center justify-between gap-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-2">
+                            <span className="text-slate-600 text-xs font-medium uppercase tracking-wide">Current Mark:</span>
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getDecisionBadgeColor()}`}>
+                                {currentInternalDecision.toUpperCase()}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => !isReleased && handleSaveDecision(null)}
+                            disabled={loading || isReleased}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Reset decision"
+                        >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Reset</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-slate-100 my-6"></div>
+
+            {/* Release Action */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-slate-700 font-medium text-sm">Release Action</h3>
+                    {isReleased && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full border border-green-200">
+                            <CheckCircle className="w-3 h-3" />
+                            Released
+                        </span>
                     )}
                 </div>
 
-                <div className="border-t pt-4"></div>
+                {isReleased ? (
+                    <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center">
+                        <p className="text-slate-500 text-sm">
+                            This decision has been released to the applicant.
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <button
+                            onClick={handleReleaseResult}
+                            disabled={!currentInternalDecision || loading}
+                            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 font-medium ${currentInternalDecision && !loading
+                                ? 'bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5'
+                                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                }`}
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Processing...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="w-4 h-4" />
+                                    <span>Release Result to Applicant</span>
+                                </>
+                            )}
+                        </button>
 
-                {/* Step 2: Release */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium block">Release Action</label>
-
-                    {isReleased ? (
-                        <div className="flex items-center gap-2 text-sm bg-green-50 text-green-700 p-3 rounded border border-green-200">
-                            <CheckCircle className="h-4 w-4" />
-                            Result released to applicant.
-                        </div>
-                    ) : (
-                        <div>
-                            <Button
-                                className="w-full"
-                                disabled={!currentInternalDecision || loading}
-                                variant="default"
-                                onClick={handleReleaseResult}
-                            >
-                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Release Result to Applicant
-                            </Button>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                Applicant will see the result immediately after release.
+                        <div className="flex items-start gap-2 text-slate-500 text-xs px-1">
+                            <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-primary" />
+                            <p>
+                                Confirmation email will be sent and applicant will see the result immediately.
                             </p>
                         </div>
-                    )}
-                </div>
-
-            </CardContent>
-        </Card>
+                    </>
+                )}
+            </div>
+        </div>
     );
 }
