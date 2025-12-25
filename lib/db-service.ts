@@ -1,4 +1,4 @@
-import { db } from '@/lib/cloudbase';
+import { db, callFunction } from '@/lib/cloudbase';
 import { Application } from '@/lib/mock-api'; // Re-use type or define new one? Let's use clean types here.
 
 // Simplify Application type for DB to match requirement (Name + Status)
@@ -9,11 +9,13 @@ export interface DBApplication {
     _id?: string;
     _openid?: string;
     userId: string;
+    email?: string; // NEW: Store email for notifications
     status: 'draft' | 'submitted' | 'under_review' | 'decision_released' | 'enrolled' | 'rejected' | 'waitlisted';
     personalInfo: {
         firstName: string;
         lastName: string;
         phone?: string;
+        email?: string; // Added to match Application type
         wechatId?: string;
         school?: string;
         grade?: string;
@@ -51,10 +53,16 @@ export const dbService = {
 
         // Removed try-catch to allow legitimate DB errors (network, permission) to bubble up.
         // We only want to return null if the query successfully returns 0 results.
+
+        // Changed from .where({ userId }) to .doc(userId) to align with security rule doc._id == auth.uid
+        // NOTE: .doc().get() returns a single object result, not an array result (unlike collection.get())
+        // BUT CloudBase JS SDK doc().get() returns res.data which might be the doc itself or array?
+        // Checking docs: doc().get() returns Res<{ data: Object }> usually, or array of length 1?
+        // Let's safe handle both. Usually doc().get() -> res.data is the document object or array with 1 item.
+        // Actually, CloudBase Client SDK doc().get() returns: Result with `data`: [doc]. It returns an array.
+
         const res = await db.collection(COLLECTION)
-            .where({
-                userId: userId
-            })
+            .doc(userId)
             .get();
 
         console.log("[db-service] getMyApplication res:", res);
@@ -74,6 +82,7 @@ export const dbService = {
                     firstName: data.personalInfo?.firstName || '',
                     lastName: data.personalInfo?.lastName || '',
                     phone: data.personalInfo?.phone || '',
+                    email: data.personalInfo?.email || data.email || '', // Fallback to root email if present
                     wechatId: data.personalInfo?.wechatId || '',
                     school: data.personalInfo?.school || '',
                     grade: data.personalInfo?.grade || ''
@@ -90,14 +99,46 @@ export const dbService = {
     },
 
     // Create a new draft application
-    async createApplication(userId: string): Promise<Application> {
+    async createApplication(userId: string, email?: string): Promise<Application> {
         if (!db) throw new Error("DB not initialized");
         console.log("[db-service] creating application for user:", userId);
+
+        // Security / Robustness Check
+        // Ensure the locally authenticated user matches the userId we are trying to create for.
+        const { auth } = require('@/lib/cloudbase'); // Lazy load to avoid cycle if any
+
+        let currentUser = auth?.currentUser;
+
+        // Try to get the latest login state to ensure token is valid/refreshed
+        if (auth) {
+            try {
+                const loginState = await auth.getLoginState();
+                if (loginState) {
+                    currentUser = loginState.user;
+                } else {
+                    currentUser = null;
+                }
+            } catch (authErr) {
+                console.warn("[db-service] getLoginState failed:", authErr);
+                // Fallback to existing currentUser property if check fails (network?)
+            }
+        }
+
+        if (!currentUser) {
+            console.error("[db-service] createApplication: No authenticated user found (checked getLoginState).");
+            throw new Error("Unable to create application: User is not authenticated. Session may have expired.");
+        }
+
+        if (currentUser.uid !== userId) {
+            console.error(`[db-service] Auth mismatch. Current: ${currentUser.uid}, Target: ${userId}`);
+            throw new Error("Unable to create application: Authentication mismatch. Please log out and log in again.");
+        }
 
         const timestamp = new Date().toISOString();
         // Do NOT include _id in the data payload for set(), as it's defined by doc(id)
         const initialData: Omit<DBApplication, '_id'> = {
             userId,
+            email: email || '', // Store email if provided
             status: 'draft',
             personalInfo: {
                 firstName: '',
@@ -131,7 +172,7 @@ export const dbService = {
             console.error("[db-service] create application failed:", e);
             // Enhance error message for permission issues
             if (e.code === 'DATABASE_PERMISSION_DENIED' || (e.message && e.message.includes('permission'))) {
-                throw new Error(`CloudBase Permission Denied: Unable to create application record. Please contact administrator to check database permissions.`);
+                throw new Error(`CloudBase Permission Denied: Unable to create application record. Auth User: ${currentUser?.uid}, Target: ${userId}. Error: ${e.message}`);
             }
             throw e;
         }
@@ -163,12 +204,14 @@ export const dbService = {
             // unless strictly forbidden. The prompt says "regardless of others" implying "don't worry about complexity", not "must delete".
             // I will save personalInfo and essays to ensure the app works.
             personalInfo: data.personalInfo,
-            essays: data.essays
+            essays: data.essays,
+            // Sync personalInfo.email to root email for notifications
+            ...(data.personalInfo?.email ? { email: data.personalInfo.email } : {})
         };
 
         try {
             const res = await db.collection(COLLECTION)
-                .where({ userId: userId })
+                .doc(userId)
                 .update(updates);
             console.log("[db-service] save result:", res);
         } catch (e) {
@@ -185,7 +228,7 @@ export const dbService = {
 
         try {
             const res = await db.collection(COLLECTION)
-                .where({ userId: userId })
+                .doc(userId)
                 .update({
                     status: 'under_review',
                     lastUpdatedAt: timestamp,
@@ -218,7 +261,7 @@ export const dbService = {
         updates.status = nextStatus;
         updates.lastUpdatedAt = timestamp;
 
-        await db.collection(COLLECTION).where({ userId }).update(updates);
+        await db.collection(COLLECTION).doc(userId).update(updates);
     },
 
     // Dev Tool: Reset
@@ -229,7 +272,7 @@ export const dbService = {
         // Reset to draft, specific timeline fields
         const _ = db.command;
 
-        await db.collection(COLLECTION).where({ userId }).update({
+        await db.collection(COLLECTION).doc(userId).update({
             status: 'draft',
             lastUpdatedAt: timestamp,
             'timeline.submittedAt': _.remove(),
@@ -270,7 +313,7 @@ export const dbService = {
         };
 
         const _ = db.command;
-        await db.collection(COLLECTION).where({ userId }).update({
+        await db.collection(COLLECTION).doc(userId).update({
             // Use array push approach
             'adminData.notes': _.push(newNote),
             lastUpdatedAt: timestamp
@@ -287,22 +330,26 @@ export const dbService = {
             lastUpdatedAt: timestamp
         };
 
-        await db.collection(COLLECTION).where({ userId }).update(updates);
+        await db.collection(COLLECTION).doc(userId).update(updates);
     },
 
-    // Admin: Release Result (updates public status)
+    // Admin: Release Result (updates public status + Sends Email)
     async releaseResult(userId: string) {
         if (!db) return;
 
-        // Fetch current doc to get internal decision
-        const current = await this.getMyApplication(userId);
-        // Wait, getMyApplication returns Application which hides adminData. 
-        // We need raw access or a helper.
-        // Let's do raw fetch.
-        const res = await db.collection(COLLECTION).where({ userId }).get();
+        // Fetch current doc to get internal decision and EMAIL
+        const res = await db.collection(COLLECTION).doc(userId).get();
         if (!res.data || res.data.length === 0) return;
 
-        const doc = res.data[0] as DBApplication;
+        // res.data is array even for doc().get()?
+        // Cloud Base doc: "If successful, result.data is an object (for doc) or array (for collection)?"
+        // Wait, standard TCB/CloudBase JS SDK for doc().get() returns res.data as the object (or array of 1?)
+        // Let's handle both.
+        const docData = Array.isArray(res.data) ? res.data[0] : res.data;
+
+        if (!docData) return;
+
+        const doc = docData as DBApplication;
         const decision = doc.adminData?.internalDecision;
 
         if (!decision) {
@@ -313,7 +360,7 @@ export const dbService = {
         const timestamp = new Date().toISOString();
 
         // Map decision to status
-        if (decision === 'accepted') publicStatus = 'decision_released'; // Accepted -> decision released (Acceptance Letter)
+        if (decision === 'accepted') publicStatus = 'decision_released';
         if (decision === 'rejected') publicStatus = 'rejected';
         if (decision === 'waitlisted') publicStatus = 'waitlisted';
 
@@ -323,8 +370,33 @@ export const dbService = {
             'timeline.decisionReleasedAt': timestamp
         };
 
-        // If accepted, we might want to set enrolledAt to null to be safe or just wait for enrollment
+        // 1. Update Database Status
+        await db.collection(COLLECTION).doc(userId).update(updates);
 
-        await db.collection(COLLECTION).where({ userId }).update(updates);
+        // 2. Send Email Notification via Cloud Function
+        if (callFunction && doc.email) {
+            console.log(`[db-service] Sending email to ${doc.email} for status: ${publicStatus}`);
+            const fullName = `${doc.personalInfo?.lastName || ''}${doc.personalInfo?.firstName || ''}`.trim() || 'Applicant';
+
+            try {
+                const emailRes = await callFunction({
+                    name: 'send-email',
+                    data: {
+                        toEmail: doc.email,
+                        templateId: 40728,
+                        templateData: {
+                            name: fullName
+                        },
+                        subject: "见山学院申请进度更新"
+                    }
+                });
+                console.log("[db-service] Email sent result:", emailRes);
+            } catch (err) {
+                console.error("[db-service] Failed to send email:", err);
+                // Do not throw, as DB update succeeded. Just log error.
+            }
+        } else {
+            console.warn("[db-service] Skipping email: No email address found for user or callFunction not available.", doc.email);
+        }
     }
 };

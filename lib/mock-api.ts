@@ -19,6 +19,7 @@ export interface Application {
     firstName: string;
     lastName: string;
     phone: string;
+    email?: string; // Added field
     wechatId?: string;
     school: string;
     grade: string;

@@ -48,7 +48,8 @@ export default function ApplyPage() {
                     console.log("No application found. Creating new draft for:", uid);
                     // createApplication uses .set(id), so it is idempotent.
                     // If two requests hit this, they write the same data to the same ID. No duplicates.
-                    myApp = await dbService.createApplication(uid);
+                    // Pass user.email to be stored for notifications
+                    myApp = await dbService.createApplication(uid, user.email);
                     console.log("Created new application:", myApp);
                 } else {
                     console.log("Found existing application:", myApp);
@@ -209,6 +210,15 @@ export default function ApplyPage() {
                                             value={app.personalInfo.phone}
                                             onChange={(e) => handleChange('personalInfo', 'phone', e.target.value)}
                                             placeholder="+86 ..."
+                                            disabled={isReadonly}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Email Address</Label>
+                                        <Input
+                                            value={app.personalInfo.email || ''}
+                                            onChange={(e) => handleChange('personalInfo', 'email', e.target.value)}
+                                            placeholder="student@example.com"
                                             disabled={isReadonly}
                                         />
                                     </div>

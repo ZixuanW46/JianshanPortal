@@ -1,0 +1,9 @@
+{
+    "name": "send-email",
+    "version": "1.0.0",
+    "description": "Send email via Tencent Cloud SES",
+    "main": "index.js",
+    "dependencies": {
+        "tencentcloud-sdk-nodejs": "^4.0.0"
+    }
+}
