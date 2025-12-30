@@ -383,7 +383,7 @@ export const dbService = {
                     name: 'send-email',
                     data: {
                         toEmail: doc.email,
-                        templateId: 40728,
+                        templateId: 40754,
                         templateData: {
                             name: fullName
                         },
