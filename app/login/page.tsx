@@ -8,12 +8,12 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Lock, Mail, MessagesSquare } from "lucide-react";
+import { Loader2, Lock, Smartphone, MessagesSquare } from "lucide-react";
 import { isAdmin } from "@/lib/utils";
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login } = useAuth();
+    const { login, sendSmsCode, loginWithCode } = useAuth();
     const [loading, setLoading] = useState(false);
 
     // Login Method State: 'password' | 'code'
@@ -28,27 +28,29 @@ export default function LoginPage() {
     // Timer State
     const [countdown, setCountdown] = useState(0);
 
-    const handleGetCode = () => {
+    const handleGetCode = async () => {
         if (!mobile) {
             setError("请输入手机号");
             return;
         }
         if (countdown > 0) return;
 
-        // Mock sending code
-        setCountdown(60);
-        const timer = setInterval(() => {
-            setCountdown((prev) => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        // TODO: Call backend API to send code
-        console.log("Sending verification code to", mobile);
+        try {
+            await sendSmsCode(mobile);
+            // Start countdown only on success
+            setCountdown(60);
+            const timer = setInterval(() => {
+                setCountdown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } catch (e: any) {
+            setError(e.message || "发送验证码失败");
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -56,32 +58,32 @@ export default function LoginPage() {
         setLoading(true);
         setError("");
         try {
-            // TODO: Adaptation for Mobile Login
-            // For now, we just pass mobile as email if method is code, or existing logic
-            // This needs backend support as requested to be done later.
-            // We keep the existing login function call signature for now but pass mobile.
-
             if (loginMethod === 'password') {
-                await login(mobile, password); // Assuming mobile can be used as identifier
+                await login(mobile, password);
+                // Router push handled in calling code or effect, but usually we just redirect here for confidence
+                // But auth context usually sets user state.
+                // Assuming login promise resolves on success.
             } else {
-                // Mock code login
                 if (!code) throw new Error("请输入验证码");
-                // await loginWithCode(mobile, code);
-                console.log("Login with code", mobile, code);
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Sim delay
-                router.push("/dashboard"); // Force redirect for demo
-                return;
+                await loginWithCode(mobile, code);
             }
 
-            // Check if logging in as admin (simulated check on mobile string)
+            // Check if logging in as admin (simulated check on mobile string or actual user object check in context)
+            // For now we rely on the router push below or the updated state.
+            // We can check isAdmin(mobile) as a heuristic before user state updates if needed, 
+            // but basically we just redirect to dashboard.
+            // Ideally we should wait for user state to update, but login awaits so it should be fine.
+
+            // Simple redirect logic
             if (isAdmin(mobile)) {
                 router.push("/admin/dashboard");
             } else {
                 router.push("/dashboard");
             }
+
         } catch (error: any) {
             console.error("Login failed", error);
-            setError("登录失败，请检查账号或密码/验证码");
+            setError(error.message || "登录失败，请检查账号或密码/验证码");
         } finally {
             setLoading(false);
         }
@@ -126,7 +128,7 @@ export default function LoginPage() {
                         onChange={(e) => setMobile(e.target.value)}
                         required
                     />
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70 pointer-events-none group-focus-within:text-primary transition-colors" />
+                    <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70 pointer-events-none group-focus-within:text-primary transition-colors" />
                 </div>
             </div>
 
@@ -135,7 +137,7 @@ export default function LoginPage() {
                 <div className="grid gap-2">
                     <div className="flex justify-between items-center">
                         <Label htmlFor={`${isMobileLayout ? 'm-' : ''}password`} className="font-semibold text-primary/90">密码</Label>
-                        <Link href="#" className="text-xs font-semibold text-muted-foreground/80 hover:text-primary transition-colors">
+                        <Link href="/forgot-password" className="text-xs font-semibold text-muted-foreground/80 hover:text-primary transition-colors">
                             忘记密码？
                         </Link>
                     </div>

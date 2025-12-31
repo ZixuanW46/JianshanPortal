@@ -1,5 +1,8 @@
 "use client"
 
+import { useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
+
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,6 +11,13 @@ import { MessagesSquare, Phone } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, loading, router]);
 
   return (
     <div className="min-h-screen w-full bg-white lg:p-6 flex items-center justify-center">

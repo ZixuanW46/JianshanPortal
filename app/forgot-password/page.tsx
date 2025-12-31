@@ -8,10 +8,9 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Lock, Smartphone, User, Eye, EyeOff, MessagesSquare } from "lucide-react";
+import { Loader2, Lock, Smartphone, Eye, EyeOff, MessagesSquare } from "lucide-react";
 
-export default function RegisterPage() {
+export default function ForgotPasswordPage() {
     const router = useRouter();
     const { registerWithMobile, sendSmsCode } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -21,7 +20,6 @@ export default function RegisterPage() {
         code: '',
         password: '',
         confirmPassword: '',
-        agreeTerms: false
     });
 
     // Timer State
@@ -56,7 +54,7 @@ export default function RegisterPage() {
         }
     };
 
-    const handleRegister = async (e: React.FormEvent) => {
+    const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -70,29 +68,32 @@ export default function RegisterPage() {
             return;
         }
 
-        // if (!formData.agreeTerms) {
-        //     setError("请阅读并同意服务条款和隐私政策");
-        //     return;
-        // }
-
         setLoading(true);
         try {
+            // Reusing registerWithMobile logic as it handles "verify SMS -> sign in -> update password"
             await registerWithMobile(formData.mobile, formData.code, formData.password);
 
-            // New users (students) go to dashboard
+            // Navigate to login after successful reset (or dashboard if automatically logged in)
+            // Users might prefer to be logged in automatically, which this does.
+            // But for clarity, we can stay here or go to dashboard. 
+            // Since registerWithMobile logs them in, let's go to dashboard or login?
+            // "Reset Password" usually implies you can log in now. 
+            // The method actually logs them in. Let's redirect to login for them to try with new password, or dashboard?
+            // User request says "Remember password? Login now". 
+            // Since they just reset it, they are logged in. Let's go to dashboard for smooth UX.
             router.push("/dashboard");
         } catch (error: any) {
-            console.error("Registration failed", error);
-            setError(error.message || "注册失败，请检查验证码是否正确");
+            console.error("Password reset failed", error);
+            setError(error.message || "重置失败，请检查验证码是否正确");
         } finally {
             setLoading(false);
         }
     };
 
     const renderForm = (isMobile: boolean) => (
-        <form onSubmit={handleRegister} className="flex flex-col gap-4">
+        <form onSubmit={handleResetPassword} className="flex flex-col gap-4">
 
-            {/* Mobile Number Input (Replaces Username & Email) */}
+            {/* Mobile Number Input */}
             <div className="grid gap-2">
                 <Label htmlFor={`${isMobile ? 'mobile-' : ''}mobile`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>手机号</Label>
                 <div className="relative group">
@@ -142,7 +143,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor={`${isMobile ? 'mobile-' : ''}password`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>密码</Label>
+                <Label htmlFor={`${isMobile ? 'mobile-' : ''}password`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>新密码</Label>
                 <div className="relative group">
                     <Input
                         id={`${isMobile ? 'mobile-' : ''}password`}
@@ -168,12 +169,12 @@ export default function RegisterPage() {
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor={`${isMobile ? 'mobile-' : ''}confirmPassword`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>确认密码</Label>
+                <Label htmlFor={`${isMobile ? 'mobile-' : ''}confirmPassword`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>确认新密码</Label>
                 <div className="relative group">
                     <Input
                         id={`${isMobile ? 'mobile-' : ''}confirmPassword`}
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="请再次输入密码"
+                        placeholder="请再次输入新密码"
                         className={`pl-11 pr-10 h-12 ${isMobile
                             ? 'border-gray-200 bg-gray-50 focus:bg-white text-[12px] rounded-xl'
                             : 'border-primary/10 bg-white/50 focus:bg-white/80'} transition-all focus-visible:ring-primary/20 placeholder:text-gray-400`}
@@ -198,7 +199,7 @@ export default function RegisterPage() {
                 className={`mt-5 h-12 w-full bg-primary hover:bg-primary/90 text-white font-bold ${isMobile ? 'text-[12px] rounded-xl' : 'tracking-wide'} border-none shadow-lg hover:shadow-xl outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all`}
             >
                 {loading && <Loader2 className={`mr-2 ${isMobile ? 'h-3 w-3' : 'h-4 w-4'} animate-spin`} />}
-                立即注册
+                重置密码
             </Button>
         </form>
     );
@@ -240,12 +241,12 @@ export default function RegisterPage() {
                     </div>
                 </div>
 
-                {/* Bottom "Boarding Pass" Registration Section */}
+                {/* Bottom "Boarding Pass" Section */}
                 <div className="flex-1 bg-white rounded-t-[32px] -mt-6 relative z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] isolate overflow-hidden flex flex-col">
                     <div className="w-full h-full overflow-y-auto px-8 pt-8 pb-8">
                         <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
                             <div className="text-left w-full">
-                                <h2 className="text-2xl font-bold text-gray-900">注册账号</h2>
+                                <h2 className="text-2xl font-bold text-gray-900">找回密码</h2>
                             </div>
 
                             {error && (
@@ -258,7 +259,7 @@ export default function RegisterPage() {
 
                             <div className="text-center mt-2 pb-6">
                                 <p className="text-[12px] text-gray-500">
-                                    已有账号？{' '}
+                                    记得密码？{' '}
                                     <Link href="/login" className="text-primary font-bold hover:underline">
                                         立即登录
                                     </Link>
@@ -302,7 +303,7 @@ export default function RegisterPage() {
                         </p>
                     </div>
 
-                    {/* Right Column - Register Card */}
+                    {/* Right Column - Card */}
                     <div className="flex items-center justify-end h-full overflow-hidden">
                         <div className="w-full max-w-[480px] h-full bg-white/80 backdrop-blur-[5px] border border-white/40 shadow-xl rounded-[32px] p-10 relative overflow-y-auto scrollbar-hide">
                             <div className="flex flex-col gap-6 min-h-min">
@@ -320,9 +321,9 @@ export default function RegisterPage() {
                                     </div>
 
                                     <div className="text-left w-full mt-4">
-                                        <h2 className="text-primary tracking-tight text-2xl font-bold leading-tight">注册账号</h2>
+                                        <h2 className="text-primary tracking-tight text-2xl font-bold leading-tight">找回密码</h2>
                                         <p className="text-muted-foreground/80 text-sm font-normal mt-2">
-                                            创建您的账户，开启见山之旅。
+                                            验证手机号并设置新密码
                                         </p>
                                     </div>
                                 </div>
@@ -337,7 +338,7 @@ export default function RegisterPage() {
 
                                 <div className="text-center">
                                     <p className="text-sm text-muted-foreground/80">
-                                        已有账号？{' '}
+                                        记得密码？{' '}
                                         <Link href="/login" className="text-primary font-bold hover:text-primary/80 transition-colors">
                                             立即登录
                                         </Link>

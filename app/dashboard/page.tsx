@@ -280,7 +280,7 @@ export default function DashboardPage() {
     useEffect(() => {
         if (!authLoading) {
             if (!user) {
-                router.push("/login");
+                router.push("/");
             } else if (isAdmin) {
                 // Admin redirect
                 router.replace("/admin/dashboard");
