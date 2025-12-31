@@ -1,14 +1,15 @@
 "use client"
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Lock, Mail, User, Eye, EyeOff, MessagesSquare } from "lucide-react";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -16,169 +17,332 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
-        username: '',
-        email: '',
+        mobile: '',
+        code: '',
         password: '',
         confirmPassword: '',
         agreeTerms: false
     });
 
+    // Timer State
+    const [countdown, setCountdown] = useState(0);
+
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState('');
+
+    const handleGetCode = () => {
+        if (!formData.mobile) {
+            setError("请输入手机号");
+            return;
+        }
+        if (countdown > 0) return;
+
+        // Mock sending code
+        setCountdown(60);
+        const timer = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        // TODO: Call backend API
+        console.log("Sending code to", formData.mobile);
+    };
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
         if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match");
+            setError("两次输入的密码不一致");
             return;
         }
 
-        if (!formData.agreeTerms) {
-            setError("You must agree to the Terms of Service");
+        if (!formData.code) {
+            setError("请输入验证码");
             return;
         }
+
+        // if (!formData.agreeTerms) {
+        //     setError("请阅读并同意服务条款和隐私政策");
+        //     return;
+        // }
 
         setLoading(true);
         try {
-            await register(formData.email, formData.username);
-            // Wait a bit to ensure state updates or just push
-            router.push("/dashboard"); // Redirect to Dashboard which will decide where to go
+            // TODO: Adaptation for Mobile Registration
+            // Pass mobile as email for now to match interface, username as "Mobile User" or similar default
+            await register(formData.mobile, "Users");
+            router.push("/dashboard");
         } catch (error: any) {
             console.error("Registration failed", error);
-            setError(error.message || "Registration failed");
+            setError(error.message || "注册失败，请稍后重试");
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="flex h-screen w-full flex-row overflow-hidden bg-background">
-            {/* Left Column - Hero (Hidden on mobile) */}
-            <div className="hidden lg:flex lg:w-7/12 flex-col justify-between p-10 h-full relative">
-                <div className="absolute inset-0 m-6 rounded-2xl overflow-hidden cursor-pointer group">
-                    <img
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuABx36VECA-_Kl_B4ms9OXRMx-qLQsl5TWKE68tN44oZTHAmG5zIC7Be7Dz9i01jjsNpx3nFcWQEZWHLot8N_ypSZkhHkI9UXOveAsBvS8L7--mg-_YnZD9YMhX94K8S4XBjXwYPj3DCwOb6L3jMzTTxnBoBhrjJXo0Dmrlmlba1mc5LWQeLdbeCuPv6hYJT0TeUsDvda470mVwZUr-zqKCy_3KvcQZDTzGw8VSU1-C4lxBaP7iG9J-KQ3nWXMKm6NhuFC1Me6oJYbB"
-                        alt="Students studying"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+    const renderForm = (isMobile: boolean) => (
+        <form onSubmit={handleRegister} className="flex flex-col gap-4">
+
+            {/* Mobile Number Input (Replaces Username & Email) */}
+            <div className="grid gap-2">
+                <Label htmlFor={`${isMobile ? 'mobile-' : ''}mobile`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>手机号</Label>
+                <div className="relative group">
+                    <Input
+                        id={`${isMobile ? 'mobile-' : ''}mobile`}
+                        type="tel"
+                        placeholder="请输入手机号"
+                        className={`pl-11 h-12 ${isMobile
+                            ? 'border-gray-200 bg-gray-50 focus:bg-white text-[12px] rounded-xl'
+                            : 'border-primary/10 bg-white/50 focus:bg-white/80'} transition-all focus-visible:ring-primary/20 placeholder:text-gray-400`}
+                        value={formData.mobile}
+                        onChange={e => setFormData({ ...formData, mobile: e.target.value })}
+                        required
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-12">
-                        <blockquote className="text-white mb-4">
-                            <p className="text-3xl font-bold leading-tight mb-4">"The best summer of my life. I learned so much and made friends from all over the world."</p>
-                            <footer className="text-white/80 font-medium text-lg">— Sarah Chen, Alumni '23</footer>
-                        </blockquote>
+                    <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-gray-400 pointer-events-none group-focus-within:text-primary transition-colors`} />
+                </div>
+            </div>
+
+            {/* Verification Code Input */}
+            <div className="grid gap-2">
+                <Label htmlFor={`${isMobile ? 'mobile-' : ''}code`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>验证码</Label>
+                <div className="relative flex gap-2">
+                    <div className="relative group flex-1">
+                        <Input
+                            id={`${isMobile ? 'mobile-' : ''}code`}
+                            type="text"
+                            placeholder="输入验证码"
+                            className={`pl-11 h-12 ${isMobile
+                                ? 'border-gray-200 bg-gray-50 focus:bg-white text-[12px] rounded-xl'
+                                : 'border-primary/10 bg-white/50 focus:bg-white/80'} transition-all focus-visible:ring-primary/20 placeholder:text-gray-400`}
+                            value={formData.code}
+                            onChange={e => setFormData({ ...formData, code: e.target.value })}
+                            required
+                        />
+                        <MessagesSquare className={`absolute left-3 top-1/2 -translate-y-1/2 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-gray-400 pointer-events-none group-focus-within:text-primary transition-colors`} />
+                    </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleGetCode}
+                        disabled={countdown > 0}
+                        className={`h-12 w-[100px] font-bold bg-white/60 hover:bg-white text-primary hover:text-primary/80 border border-primary/10 hover:border-primary/20 shadow-sm hover:shadow-md transition-all ${isMobile ? 'text-[12px] rounded-xl' : 'rounded-md'}`}
+                    >
+                        {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                    </Button>
+                </div>
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor={`${isMobile ? 'mobile-' : ''}password`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>密码</Label>
+                <div className="relative group">
+                    <Input
+                        id={`${isMobile ? 'mobile-' : ''}password`}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="至少8位字符"
+                        className={`pl-11 pr-10 h-12 ${isMobile
+                            ? 'border-gray-200 bg-gray-50 focus:bg-white text-[12px] rounded-xl'
+                            : 'border-primary/10 bg-white/50 focus:bg-white/80'} transition-all focus-visible:ring-primary/20 placeholder:text-gray-400`}
+                        value={formData.password}
+                        onChange={e => setFormData({ ...formData, password: e.target.value })}
+                        required
+                        minLength={8}
+                    />
+                    <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-gray-400 pointer-events-none group-focus-within:text-primary transition-colors`} />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors outline-none"
+                    >
+                        {showPassword ? <EyeOff size={isMobile ? 16 : 18} /> : <Eye size={isMobile ? 16 : 18} />}
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor={`${isMobile ? 'mobile-' : ''}confirmPassword`} className={`font-semibold ${isMobile ? 'text-gray-700 text-[12px]' : 'text-primary/90'}`}>确认密码</Label>
+                <div className="relative group">
+                    <Input
+                        id={`${isMobile ? 'mobile-' : ''}confirmPassword`}
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="请再次输入密码"
+                        className={`pl-11 pr-10 h-12 ${isMobile
+                            ? 'border-gray-200 bg-gray-50 focus:bg-white text-[12px] rounded-xl'
+                            : 'border-primary/10 bg-white/50 focus:bg-white/80'} transition-all focus-visible:ring-primary/20 placeholder:text-gray-400`}
+                        value={formData.confirmPassword}
+                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        required
+                    />
+                    <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-gray-400 pointer-events-none group-focus-within:text-primary transition-colors`} />
+                    <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors outline-none"
+                    >
+                        {showConfirmPassword ? <EyeOff size={isMobile ? 16 : 18} /> : <Eye size={isMobile ? 16 : 18} />}
+                    </button>
+                </div>
+            </div>
+
+            <Button
+                type="submit"
+                disabled={loading}
+                className={`mt-5 h-12 w-full bg-primary hover:bg-primary/90 text-white font-bold ${isMobile ? 'text-[12px] rounded-xl' : 'tracking-wide'} border-none shadow-lg hover:shadow-xl outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all`}
+            >
+                {loading && <Loader2 className={`mr-2 ${isMobile ? 'h-3 w-3' : 'h-4 w-4'} animate-spin`} />}
+                立即注册
+            </Button>
+        </form>
+    );
+
+    return (
+        <div className="min-h-screen w-full bg-white lg:p-6 flex items-center justify-center">
+
+            {/* =======================
+                MOBILE LAYOUT (lg:hidden)
+               ======================= */}
+            <div className="lg:hidden flex flex-col w-full h-[100dvh] overflow-hidden bg-white">
+
+                {/* Top "Poster" Section */}
+                <div className="relative h-[30vh] w-full bg-slate-900 shrink-0 overflow-hidden">
+                    {/* Background Image */}
+                    <div
+                        className="absolute inset-0 bg-cover"
+                        style={{
+                            backgroundImage: "url('/login-bg.jpg')",
+                            backgroundPosition: "68% 35%"
+                        }}
+                    />
+                    {/* Dark Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+                    {/* Badge */}
+                    <div className="absolute top-8 left-8 z-10">
+                        <div className="inline-flex items-center justify-center px-[16px] py-[8px] rounded-[32px] bg-[#818181]/40 backdrop-blur-[4px] border border-[#CCC]/40 w-fit">
+                            <span className="text-white text-xs font-medium tracking-wide">见山学院 2026</span>
+                        </div>
+                    </div>
+
+                    {/* Marketing Text */}
+                    <div className="absolute bottom-10 left-8 space-y-2 z-10">
+                        <h1 className="text-white text-xl font-black leading-tight drop-shadow-sm">
+                            开启你的<br />
+                            <span className="text-[#FFB800]">学术探索之旅</span>
+                        </h1>
+                    </div>
+                </div>
+
+                {/* Bottom "Boarding Pass" Registration Section */}
+                <div className="flex-1 bg-white rounded-t-[32px] -mt-6 relative z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] isolate overflow-hidden flex flex-col">
+                    <div className="w-full h-full overflow-y-auto px-8 pt-8 pb-8">
+                        <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
+                            <div className="text-left w-full">
+                                <h2 className="text-2xl font-bold text-gray-900">注册账号</h2>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-[12px] font-medium border border-red-100">
+                                    {error}
+                                </div>
+                            )}
+
+                            {renderForm(true)}
+
+                            <div className="text-center mt-2 pb-6">
+                                <p className="text-[12px] text-gray-500">
+                                    已有账号？{' '}
+                                    <Link href="/login" className="text-primary font-bold hover:underline">
+                                        立即登录
+                                    </Link>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Right Column - Form */}
-            <div className="flex w-full lg:w-5/12 flex-col justify-center px-6 sm:px-12 py-10 lg:p-20 bg-background h-full overflow-y-auto">
-                <div className="w-full max-w-[480px] mx-auto flex flex-col gap-6">
-                    <div className="flex flex-col gap-2 mb-4">
-                        <h1 className="text-4xl font-black tracking-tight text-foreground">Your Summer Adventure Starts Here!</h1>
-                        <p className="text-muted-foreground text-lg">Sign up and get ready for an unforgettable experience!</p>
+
+            {/* =======================
+                DESKTOP LAYOUT (hidden lg:block)
+               ======================= */}
+            <div className="hidden lg:block relative w-full lg:h-[calc(100vh-3rem)] lg:rounded-[2rem] overflow-hidden bg-primary/95 group/design-root shadow-2xl">
+                {/* Background Image with Overlay */}
+                <div
+                    className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
+                    style={{ backgroundImage: "url('/login-bg.jpg')" }}
+                />
+                <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+                {/* Grid Layout for Content */}
+                <div className="relative z-10 w-full h-full grid grid-cols-2 p-16 gap-8">
+
+                    {/* Left Column - Marketing Text */}
+                    <div className="flex flex-col justify-end items-start space-y-6">
+                        <div className="inline-flex items-center justify-center px-4 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/10">
+                            <span className="text-white font-medium text-lg tracking-wide">见山学院 2026</span>
+                        </div>
+
+                        <h1 className="text-white text-5xl xl:text-6xl font-black leading-tight tracking-tight drop-shadow-md">
+                            一个由你和<br />
+                            <span className="text-accent">剑桥国际学者</span><br />
+                            共同构建的<br />
+                            无国界微型大学
+                        </h1>
+
+                        <p className="text-gray-200 text-lg font-light tracking-wide opacity-90">
+                            在此解锁学科探索的无限可能
+                        </p>
                     </div>
 
-                    {error && (
-                        <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                            {error}
-                        </div>
-                    )}
+                    {/* Right Column - Register Card */}
+                    <div className="flex items-center justify-end h-full overflow-hidden">
+                        <div className="w-full max-w-[480px] h-full bg-white/80 backdrop-blur-[5px] border border-white/40 shadow-xl rounded-[32px] p-10 relative overflow-y-auto scrollbar-hide">
+                            <div className="flex flex-col gap-6 min-h-min">
+                                <div className="flex flex-col gap-2 items-center text-center">
+                                    <div className="relative w-[60px] h-[90px] hover:opacity-80 transition-opacity cursor-pointer mt-2 mb-2">
+                                        <Link href="/">
+                                            <Image
+                                                src="/jianshan-login-logo.png"
+                                                alt="Jianshan Logo"
+                                                fill
+                                                className="object-contain"
+                                                priority
+                                            />
+                                        </Link>
+                                    </div>
 
-                    <form onSubmit={handleRegister} className="flex flex-col gap-5">
-                        <div className="grid gap-2">
-                            <Label htmlFor="username">Username</Label>
-                            <Input
-                                id="username"
-                                placeholder="Enter your preferred username"
-                                className="h-14 bg-background"
-                                value={formData.username}
-                                onChange={e => setFormData({ ...formData, username: e.target.value })}
-                                required
-                            />
-                        </div>
+                                    <div className="text-left w-full mt-4">
+                                        <h2 className="text-primary tracking-tight text-2xl font-bold leading-tight">注册账号</h2>
+                                        <p className="text-muted-foreground/80 text-sm font-normal mt-2">
+                                            创建您的账户，开启见山之旅。
+                                        </p>
+                                    </div>
+                                </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="student@example.com"
-                                className="h-14 bg-background"
-                                value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                required
-                            />
-                        </div>
+                                {error && (
+                                    <div className="bg-red-50/80 backdrop-blur-sm text-red-600 px-4 py-3 rounded-md text-sm font-medium border border-red-100">
+                                        {error}
+                                    </div>
+                                )}
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <div className="relative">
-                                <Input
-                                    id="password"
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="At least 8 characters"
-                                    className="h-14 bg-background pr-12"
-                                    value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    required
-                                    minLength={8}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-0 top-0 h-full px-4 text-muted-foreground hover:text-foreground"
-                                >
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
+                                {renderForm(false)}
+
+                                <div className="text-center">
+                                    <p className="text-sm text-muted-foreground/80">
+                                        已有账号？{' '}
+                                        <Link href="/login" className="text-primary font-bold hover:text-primary/80 transition-colors">
+                                            立即登录
+                                        </Link>
+                                    </p>
+                                </div>
                             </div>
                         </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="confirmPassword">Confirm Password</Label>
-                            <div className="relative">
-                                <Input
-                                    id="confirmPassword"
-                                    type={showConfirmPassword ? "text" : "password"}
-                                    placeholder="Re-enter your password"
-                                    className="h-14 bg-background pr-12"
-                                    value={formData.confirmPassword}
-                                    onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-0 top-0 h-full px-4 text-muted-foreground hover:text-foreground"
-                                >
-                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 mt-2">
-                            <Checkbox
-                                id="terms"
-                                checked={formData.agreeTerms}
-                                onCheckedChange={(checked) => setFormData({ ...formData, agreeTerms: checked as boolean })}
-                            />
-                            <Label htmlFor="terms" className="text-sm font-medium leading-tight text-muted-foreground">
-                                I agree to the <Link href="#" className="font-bold text-foreground hover:text-primary underline">Terms of Service</Link> and <Link href="#" className="font-bold text-foreground hover:text-primary underline">Privacy Policy</Link>.
-                            </Label>
-                        </div>
-
-                        <Button type="submit" disabled={loading} size="lg" className="h-14 text-base font-bold mt-2 w-full">
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Account
-                        </Button>
-                    </form>
-
-                    <div className="text-center mt-4 md:hidden">
-                        <p className="text-muted-foreground text-sm">
-                            Already have an account? <Link href="/login" className="font-bold text-foreground hover:text-primary">Log in</Link>
-                        </p>
                     </div>
                 </div>
             </div>

@@ -15,30 +15,190 @@ export default function LoginPage() {
     const router = useRouter();
     const { login } = useAuth();
     const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState("");
+
+    // Login Method State: 'password' | 'code'
+    const [loginMethod, setLoginMethod] = useState<'password' | 'code'>('password');
+
+    // Form States
+    const [mobile, setMobile] = useState("");
     const [password, setPassword] = useState("");
+    const [code, setCode] = useState("");
     const [error, setError] = useState("");
+
+    // Timer State
+    const [countdown, setCountdown] = useState(0);
+
+    const handleGetCode = () => {
+        if (!mobile) {
+            setError("请输入手机号");
+            return;
+        }
+        if (countdown > 0) return;
+
+        // Mock sending code
+        setCountdown(60);
+        const timer = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        // TODO: Call backend API to send code
+        console.log("Sending verification code to", mobile);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
         try {
-            await login(email, password);
+            // TODO: Adaptation for Mobile Login
+            // For now, we just pass mobile as email if method is code, or existing logic
+            // This needs backend support as requested to be done later.
+            // We keep the existing login function call signature for now but pass mobile.
 
-            // Check if logging in as admin
-            if (isAdmin(email)) {
+            if (loginMethod === 'password') {
+                await login(mobile, password); // Assuming mobile can be used as identifier
+            } else {
+                // Mock code login
+                if (!code) throw new Error("请输入验证码");
+                // await loginWithCode(mobile, code);
+                console.log("Login with code", mobile, code);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Sim delay
+                router.push("/dashboard"); // Force redirect for demo
+                return;
+            }
+
+            // Check if logging in as admin (simulated check on mobile string)
+            if (isAdmin(mobile)) {
                 router.push("/admin/dashboard");
             } else {
                 router.push("/dashboard");
             }
         } catch (error: any) {
             console.error("Login failed", error);
-            setError("用户名或密码错误，请重试。");
+            setError("登录失败，请检查账号或密码/验证码");
         } finally {
             setLoading(false);
         }
     };
+
+    const renderForm = (isMobileLayout: boolean) => (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* Login Method Toggle Tabs */}
+            <div className="flex p-1 bg-gray-100/80 rounded-xl mb-2">
+                <button
+                    type="button"
+                    onClick={() => { setLoginMethod('password'); setError(''); }}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${loginMethod === 'password'
+                        ? 'bg-white text-primary shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    密码登录
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { setLoginMethod('code'); setError(''); }}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${loginMethod === 'code'
+                        ? 'bg-white text-primary shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    验证码登录
+                </button>
+            </div>
+
+            {/* Mobile Number Input */}
+            <div className="grid gap-2">
+                <Label htmlFor={`${isMobileLayout ? 'm-' : ''}mobile`} className="font-semibold text-primary/90">手机号</Label>
+                <div className="relative group">
+                    <Input
+                        id={`${isMobileLayout ? 'm-' : ''}mobile`}
+                        type="tel"
+                        placeholder="请输入手机号"
+                        className={`pl-11 h-12 border-primary/10 bg-white/50 focus:bg-white/80 transition-all focus-visible:ring-primary/20 placeholder:text-muted-foreground/60 ${isMobileLayout ? 'text-[12px] rounded-xl' : ''}`}
+                        value={mobile}
+                        onChange={(e) => setMobile(e.target.value)}
+                        required
+                    />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70 pointer-events-none group-focus-within:text-primary transition-colors" />
+                </div>
+            </div>
+
+            {/* Password Input (Only for Password Method) */}
+            {loginMethod === 'password' && (
+                <div className="grid gap-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor={`${isMobileLayout ? 'm-' : ''}password`} className="font-semibold text-primary/90">密码</Label>
+                        <Link href="#" className="text-xs font-semibold text-muted-foreground/80 hover:text-primary transition-colors">
+                            忘记密码？
+                        </Link>
+                    </div>
+                    <div className="relative group">
+                        <Input
+                            id={`${isMobileLayout ? 'm-' : ''}password`}
+                            type="password"
+                            placeholder="请输入密码"
+                            className={`pl-11 h-12 border-primary/10 bg-white/50 focus:bg-white/80 transition-all focus-visible:ring-primary/20 placeholder:text-muted-foreground/60 ${isMobileLayout ? 'text-[12px] rounded-xl' : ''}`}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70 pointer-events-none group-focus-within:text-primary transition-colors" />
+                    </div>
+                </div>
+            )}
+
+            {/* Verification Code Input (Only for Code Method) */}
+            {loginMethod === 'code' && (
+                <div className="grid gap-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor={`${isMobileLayout ? 'm-' : ''}code`} className="font-semibold text-primary/90">验证码</Label>
+                        <div className="text-xs font-semibold text-transparent select-none">
+                            忘记密码？
+                        </div>
+                    </div>
+                    <div className="relative flex gap-2">
+                        <div className="relative group flex-1">
+                            <Input
+                                id={`${isMobileLayout ? 'm-' : ''}code`}
+                                type="text"
+                                placeholder="输入验证码"
+                                className={`pl-11 h-12 border-primary/10 bg-white/50 focus:bg-white/80 transition-all focus-visible:ring-primary/20 placeholder:text-muted-foreground/60 ${isMobileLayout ? 'text-[12px] rounded-xl' : ''}`}
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                required
+                            />
+                            <MessagesSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70 pointer-events-none group-focus-within:text-primary transition-colors" />
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleGetCode}
+                            disabled={countdown > 0}
+                            className={`h-12 w-[100px] font-bold bg-white/60 hover:bg-white text-primary hover:text-primary/80 border border-primary/10 hover:border-primary/20 shadow-sm hover:shadow-md transition-all ${isMobileLayout ? 'text-[12px] rounded-xl' : 'rounded-md'}`}
+                        >
+                            {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            <Button
+                type="submit"
+                disabled={loading}
+                className={`mt-2 h-12 w-full bg-primary hover:bg-primary/90 text-white font-bold tracking-wide border-none shadow-lg hover:shadow-xl outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all ${isMobileLayout ? 'text-[12px] rounded-xl' : ''}`}
+            >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                登录
+            </Button>
+        </form>
+    );
 
     return (
         <div className="min-h-screen w-full bg-white lg:p-6 flex items-center justify-center">
@@ -101,52 +261,7 @@ export default function LoginPage() {
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="mobile-email" className="font-semibold text-gray-700 text-[12px]">用户名 / 邮箱</Label>
-                                    <div className="relative group">
-                                        <Input
-                                            id="mobile-email"
-                                            type="text"
-                                            placeholder="用户名 / 邮箱"
-                                            className="pl-11 h-12 border-gray-200 bg-gray-50 focus:bg-white transition-all focus-visible:ring-primary/20 placeholder:text-gray-400 rounded-xl text-[12px]"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            required
-                                        />
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    </div>
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <div className="flex justify-between items-center">
-                                        <Label htmlFor="mobile-password" className="font-semibold text-gray-700 text-[12px]">密码</Label>
-                                        <Link href="#" className="text-[12px] font-semibold text-gray-400 hover:text-primary transition-colors">
-                                            忘记密码？
-                                        </Link>
-                                    </div>
-                                    <div className="relative group">
-                                        <Input
-                                            id="mobile-password"
-                                            type="password"
-                                            placeholder="请输入密码"
-                                            className="pl-11 h-12 border-gray-200 bg-gray-50 focus:bg-white transition-all focus-visible:ring-primary/20 placeholder:text-gray-400 rounded-xl text-[12px]"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                        />
-                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    </div>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="mt-2 h-12 w-full bg-primary hover:bg-primary/90 text-white font-bold text-[12px] rounded-xl shadow-lg outline-none border-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
-                                >
-                                    {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                                    登录
-                                </Button>
-                            </form>
+                            {renderForm(true)}
 
                             <div className="relative flex py-1 items-center">
                                 <div className="flex-grow border-t border-gray-100"></div>
@@ -158,7 +273,7 @@ export default function LoginPage() {
                                 variant="default"
                                 className="h-12 w-full bg-[#07C160] hover:bg-[#06ad56] text-white font-bold gap-2 rounded-xl text-[12px] outline-none border-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                             >
-                                <MessagesSquare className="h-4 w-4" />
+                                <Image src="/wechat-btn-logo.png" alt="WeChat" width={16} height={16} className="h-4 w-4 object-contain" />
                                 微信登录
                             </Button>
 
@@ -213,23 +328,25 @@ export default function LoginPage() {
 
                     {/* Right Column - Login Card (Centered) */}
                     <div className="flex items-center justify-end h-full overflow-hidden">
-                        <div className="w-full max-w-[480px] h-full bg-white/60 backdrop-blur-md border border-white/40 shadow-xl rounded-[2rem] p-10 relative overflow-y-auto scrollbar-hide">
+                        <div className="w-full max-w-[480px] h-full bg-white/80 backdrop-blur-[5px] border border-white/40 shadow-xl rounded-[32px] p-10 relative overflow-y-auto scrollbar-hide">
                             {/* Card Content */}
                             <div className="flex flex-col gap-8 min-h-min">
                                 <div className="flex flex-col gap-2 items-center text-center">
                                     {/* Desktop Logo */}
-                                    <div className="relative w-[60px] h-[90px]">
-                                        <Image
-                                            src="/jianshan-login-logo.png"
-                                            alt="Jianshan Logo"
-                                            fill
-                                            className="object-contain"
-                                            priority
-                                        />
+                                    <div className="relative w-[60px] h-[90px] hover:opacity-80 transition-opacity cursor-pointer mt-2 mb-2">
+                                        <Link href="/">
+                                            <Image
+                                                src="/jianshan-login-logo.png"
+                                                alt="Jianshan Logo"
+                                                fill
+                                                className="object-contain"
+                                                priority
+                                            />
+                                        </Link>
                                     </div>
 
                                     <div className="text-left w-full mt-4">
-                                        <h2 className="text-primary tracking-tight text-3xl font-bold leading-tight">学生登录</h2>
+                                        <h2 className="text-primary tracking-tight text-2xl font-bold leading-tight">学生登录</h2>
                                         <p className="text-muted-foreground/80 text-sm font-normal mt-2">
                                             欢迎来到见山申请门户，请登录。
                                         </p>
@@ -242,65 +359,7 @@ export default function LoginPage() {
                                     </div>
                                 )}
 
-                                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="email" className="font-semibold text-primary/90">用户名 / 邮箱</Label>
-                                        <div className="relative group">
-                                            <Input
-                                                id="email"
-                                                type="text"
-                                                placeholder="用户名 / 邮箱"
-                                                className="pl-11 h-12 border-primary/10 bg-white/50 focus:bg-white/80 transition-all focus-visible:ring-primary/20 placeholder:text-muted-foreground/60"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                required
-                                            />
-                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70 pointer-events-none group-focus-within:text-primary transition-colors" />
-                                        </div>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <div className="flex justify-between items-center">
-                                            <Label htmlFor="password" className="font-semibold text-primary/90">密码</Label>
-                                            <Link href="#" className="text-xs font-semibold text-muted-foreground/80 hover:text-primary transition-colors">
-                                                忘记密码？
-                                            </Link>
-                                        </div>
-                                        <div className="relative group">
-                                            <Input
-                                                id="password"
-                                                type="password"
-                                                placeholder="请输入密码"
-                                                className="pl-11 h-12 border-primary/10 bg-white/50 focus:bg-white/80 transition-all focus-visible:ring-primary/20 placeholder:text-muted-foreground/60"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                            />
-                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70 pointer-events-none group-focus-within:text-primary transition-colors" />
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="mt-2 h-12 w-full bg-primary hover:bg-primary/90 text-white font-bold tracking-wide border-none shadow-lg hover:shadow-xl outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
-                                    >
-                                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        登录
-                                    </Button>
-                                </form>
-
-                                <div className="relative flex py-2 items-center">
-                                    <div className="flex-grow border-t border-primary/10"></div>
-                                    <span className="flex-shrink-0 mx-4 text-muted-foreground/70 text-xs uppercase font-semibold tracking-wider">其他登录方式</span>
-                                    <div className="flex-grow border-t border-primary/10"></div>
-                                </div>
-
-                                <Button
-                                    variant="default"
-                                    className="h-12 w-full bg-[#07C160] hover:bg-[#06ad56] text-white font-bold gap-3 shadow-md hover:shadow-lg outline-none border-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
-                                >
-                                    <MessagesSquare className="h-5 w-5" />
-                                    微信登录
-                                </Button>
+                                {renderForm(false)}
 
                                 <div className="text-center">
                                     <p className="text-sm text-muted-foreground/80">
