@@ -15,8 +15,21 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, ArrowRight, Save, Tent, User, GraduationCap, FileText, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+
+
+
 export default function ApplyPage() {
     const { user, loading: authLoading } = useAuth();
+
+    const statusMap: Record<string, string> = {
+        draft: '草稿',
+        submitted: '已提交',
+        under_review: '审核中',
+        decision_released: '结果已出',
+        enrolled: '已录取',
+        rejected: '未录取',
+        waitlisted: '候补名单',
+    };
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -151,22 +164,22 @@ export default function ApplyPage() {
 
                     {/* Breadcrumb */}
                     <nav className="flex items-center text-sm font-medium">
-                        <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer" onClick={() => router.push('/dashboard')}>Dashboard</span>
+                        <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer" onClick={() => router.push('/dashboard')}>主页</span>
                         <span className="mx-2 text-muted-foreground">/</span>
-                        <span className="text-primary font-semibold">Application Form</span>
+                        <span className="text-primary font-semibold">申请表</span>
                     </nav>
 
                     <div className="flex flex-col gap-2">
                         <h2 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight text-primary">
-                            Student Application
+                            学生申请表
                         </h2>
                         <p className="text-muted-foreground text-lg">
-                            Please fill out the details below to register for the upcoming summer session.
+                            请填写以下详细信息以注册即将到来的夏令营。
                         </p>
                         {isReadonly && (
                             <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 p-4 rounded-lg flex items-center gap-2 mt-2">
                                 <CheckCircle2 className="h-5 w-5" />
-                                <span className="font-medium">Application Submitted. Status: {app.status}</span>
+                                <span className="font-medium">申请已提交。状态：{statusMap[app.status] || app.status}</span>
                             </div>
                         )}
                     </div>
@@ -183,29 +196,29 @@ export default function ApplyPage() {
                             <div className="p-6 md:p-8 border-b">
                                 <div className="flex items-center gap-3 mb-6">
                                     <span className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md">1</span>
-                                    <h3 className="text-xl font-bold text-foreground">Personal Information</h3>
+                                    <h3 className="text-xl font-bold text-foreground">个人信息</h3>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="grid gap-2">
-                                        <Label>First Name</Label>
+                                        <Label>名 (First Name)</Label>
                                         <Input
                                             value={app.personalInfo.firstName}
                                             onChange={(e) => handleChange('personalInfo', 'firstName', e.target.value)}
-                                            placeholder="Enter first name"
+                                            placeholder="输入名"
                                             disabled={isReadonly}
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>Last Name</Label>
+                                        <Label>姓 (Last Name)</Label>
                                         <Input
                                             value={app.personalInfo.lastName}
                                             onChange={(e) => handleChange('personalInfo', 'lastName', e.target.value)}
-                                            placeholder="Enter last name"
+                                            placeholder="输入姓"
                                             disabled={isReadonly}
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>Phone Number</Label>
+                                        <Label>电话号码</Label>
                                         <Input
                                             value={app.personalInfo.phone}
                                             onChange={(e) => handleChange('personalInfo', 'phone', e.target.value)}
@@ -214,7 +227,7 @@ export default function ApplyPage() {
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>Email Address</Label>
+                                        <Label>电子邮箱</Label>
                                         <Input
                                             value={app.personalInfo.email || ''}
                                             onChange={(e) => handleChange('personalInfo', 'email', e.target.value)}
@@ -223,7 +236,7 @@ export default function ApplyPage() {
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>WeChat ID</Label>
+                                        <Label>微信号</Label>
                                         <Input
                                             value={app.personalInfo.wechatId || ''}
                                             onChange={(e) => handleChange('personalInfo', 'wechatId', e.target.value)}
@@ -238,27 +251,27 @@ export default function ApplyPage() {
                             <div className="p-6 md:p-8 border-b">
                                 <div className="flex items-center gap-3 mb-6">
                                     <span className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md">2</span>
-                                    <h3 className="text-xl font-bold text-foreground">Educational Background</h3>
+                                    <h3 className="text-xl font-bold text-foreground">教育背景</h3>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="grid gap-2 md:col-span-2">
-                                        <Label>Current School</Label>
+                                        <Label>所在学校</Label>
                                         <Input
                                             value={app.personalInfo.school}
                                             onChange={(e) => handleChange('personalInfo', 'school', e.target.value)}
-                                            placeholder="Enter school name"
+                                            placeholder="输入学校名称"
                                             disabled={isReadonly}
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>Grade / Level</Label>
+                                        <Label>年级</Label>
                                         <Select
                                             disabled={isReadonly}
                                             value={app.personalInfo.grade}
                                             onValueChange={(val) => handleChange('personalInfo', 'grade', val)}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select grade" />
+                                                <SelectValue placeholder="选择年级" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="Grade 9">Grade 9</SelectItem>
@@ -276,24 +289,24 @@ export default function ApplyPage() {
                             <div className="p-6 md:p-8 bg-primary/5 dark:bg-primary/10">
                                 <div className="flex items-center gap-3 mb-6">
                                     <span className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md">3</span>
-                                    <h3 className="text-xl font-bold text-foreground">Camp Specifics</h3>
+                                    <h3 className="text-xl font-bold text-foreground">夏令营详情</h3>
                                 </div>
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="grid gap-2">
-                                        <Label>Why do you want to join Jianshan Summer Camp?</Label>
+                                        <Label>您为什么想参加见山夏令营？</Label>
                                         <Textarea
                                             className="h-32 resize-none bg-background"
-                                            placeholder="Tell us about your interests and goals..."
+                                            placeholder="告诉我们您的兴趣和目标..."
                                             value={app.essays.question1}
                                             onChange={(e) => handleChange('essays', 'question1', e.target.value)}
                                             disabled={isReadonly}
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>Medical Conditions or Dietary Restrictions</Label>
+                                        <Label>医疗状况或饮食限制</Label>
                                         <Textarea
                                             className="h-24 resize-none bg-background"
-                                            placeholder="Please list any allergies, medications, or dietary needs..."
+                                            placeholder="请列出任何过敏、药物或饮食需求..."
                                             value={app.essays.question2}
                                             onChange={(e) => handleChange('essays', 'question2', e.target.value)}
                                             disabled={isReadonly}
@@ -303,7 +316,7 @@ export default function ApplyPage() {
                                     <div className="flex items-start gap-3 mt-2">
                                         <Checkbox id="terms" disabled={isReadonly} />
                                         <Label htmlFor="terms" className="text-sm text-muted-foreground font-normal leading-normal">
-                                            I agree to the <a href="#" className="text-primary font-bold hover:text-accent hover:underline">Terms and Conditions</a> and confirm that all information provided is accurate.
+                                            本人同意<a href="#" className="text-primary font-bold hover:text-accent hover:underline">条款与条件</a>并确认所填信息真实有效。
                                         </Label>
                                     </div>
                                 </div>
@@ -312,7 +325,7 @@ export default function ApplyPage() {
                             {/* Footer Actions */}
                             <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 p-6 md:px-8 md:py-6 bg-card border-t sticky bottom-0 z-10">
                                 {isReadonly ? (
-                                    <div className="text-muted-foreground text-sm">Application is {app.status}. Modifications are locked.</div>
+                                    <div className="text-muted-foreground text-sm">申请状态为 {statusMap[app.status] || app.status}。已锁定修改。</div>
                                 ) : (
                                     <>
                                         <Button
@@ -323,18 +336,18 @@ export default function ApplyPage() {
                                             className="w-full sm:w-auto bg-slate-100 text-slate-600 border-2 border-slate-200 font-bold hover:bg-slate-200 hover:text-slate-800 hover:border-slate-300"
                                         >
                                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Save Draft
+                                            保存草稿
                                         </Button>
                                         <div className="flex items-center gap-4 w-full sm:w-auto">
                                             <span className="text-xs font-medium text-muted-foreground hidden sm:block">
-                                                Last saved {new Date(app.lastUpdatedAt).toLocaleTimeString()}
+                                                上次保存于 {new Date(app.lastUpdatedAt).toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai' })}
                                             </span>
                                             <Button
                                                 type="submit"
                                                 disabled={saving}
                                                 className="w-full sm:w-auto font-bold gap-2"
                                             >
-                                                Submit Application
+                                                提交申请
                                                 <ArrowRight className="h-4 w-4" />
                                             </Button>
                                         </div>

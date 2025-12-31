@@ -26,7 +26,10 @@ export function Navbar() {
         <header className="sticky top-0 z-50 w-full border-b bg-white">
             <div className="container px-4 md:px-8 flex h-18 items-center justify-between mx-auto max-w-7xl">
                 <div className="flex items-center gap-2 md:gap-4">
-                    <Link href={isAdmin ? "/admin/dashboard" : "/"} className="flex items-center gap-2">
+                    <Link
+                        href={!user ? "/" : (isAdmin ? "/admin/dashboard" : "/dashboard")}
+                        className="flex items-center gap-2"
+                    >
                         <Image
                             src="/logo_black.png"
                             alt="Jianshan Academy Logo"
@@ -36,7 +39,7 @@ export function Navbar() {
                         />
                         <div className="h-6 w-px bg-gray-300 mx-2" />
                         <span className="font-medium text-lg text-foreground">
-                            {isAdmin ? "Admin Portal" : "Student Portal"}
+                            {isAdmin ? "Admin Portal" : "学生门户 Student Portal"}
                         </span>
                     </Link>
                 </div>
@@ -60,7 +63,7 @@ export function Navbar() {
                             href="/faq"
                             className={cn("text-sm font-medium transition-colors hover:text-primary hidden sm:block", pathname === '/faq' ? "text-primary" : "text-muted-foreground")}
                         >
-                            FAQ
+                            常见问题
                         </Link>
                     )}
 
@@ -72,14 +75,14 @@ export function Navbar() {
                                 onClick={() => { }} // Profile TODO
                             >
                                 <UserIcon className="h-4 w-4" />
-                                {user.name || (isAdmin ? 'Admin' : 'Student')}
+                                {user.name || (isAdmin ? '管理员' : '学生')}
                             </button>
 
                             <Button
                                 variant="ghost"
                                 className="text-muted-foreground hover:bg-transparent hover:text-destructive hidden sm:flex px-2"
                                 onClick={() => logout()}
-                                title="Log Out"
+                                title="退出登录"
                             >
                                 <LogOut className="h-5 w-5" />
                             </Button>
@@ -87,7 +90,7 @@ export function Navbar() {
                     ) : (
                         <div className="hidden sm:flex items-center gap-4">
                             <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                                Log in
+                                登录
                             </Link>
                         </div>
                     )}
@@ -115,7 +118,7 @@ export function Navbar() {
                                 <div className="p-1 bg-gray-100 rounded-md">
                                     <HelpCircle className="h-4 w-4" />
                                 </div>
-                                FAQ
+                                常见问题
                             </Link>
                         )}
 
@@ -139,14 +142,14 @@ export function Navbar() {
                             <>
                                 <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100">
                                     <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                        Signed in as
+                                        当前登录
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="p-1.5 bg-primary/10 rounded-full">
                                             <UserIcon className="h-4 w-4 text-primary" />
                                         </div>
                                         <div className="font-medium text-foreground">
-                                            {user.name || (isAdmin ? 'Admin' : 'Student')}
+                                            {user.name || (isAdmin ? '管理员' : '学生')}
                                         </div>
                                     </div>
                                 </div>
@@ -160,7 +163,7 @@ export function Navbar() {
                                     <div className="p-1 bg-red-50 rounded-md">
                                         <LogOut className="h-4 w-4" />
                                     </div>
-                                    Log out
+                                    退出登录
                                 </button>
                             </>
                         ) : (
@@ -172,7 +175,7 @@ export function Navbar() {
                                 <div className="p-1 bg-primary/10 rounded-md">
                                     <UserIcon className="h-4 w-4" />
                                 </div>
-                                Log in
+                                登录
                             </Link>
                         )}
                     </nav>

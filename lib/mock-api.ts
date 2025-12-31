@@ -13,6 +13,9 @@ export interface Application {
   userId: string;
   status: 'draft' | 'submitted' | 'under_review' | 'decision_released' | 'enrolled' | 'rejected' | 'waitlisted';
   submittedAt?: string; // ISO Date
+  registeredAt?: string; // ISO Date
+  decisionReleasedAt?: string; // ISO Date
+  enrolledAt?: string; // ISO Date
   lastUpdatedAt: string; // ISO Date
   // Form Data (simplified for now)
   personalInfo: {

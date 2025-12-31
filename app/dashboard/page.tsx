@@ -12,7 +12,69 @@ import { cn } from "@/lib/utils";
 
 // --- Components ---
 
-function ProgressTimeline({ status }: { status: Application['status'] }) {
+// Helper for formatting dates (Beijing Time)
+function formatDate(dateStr?: string) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'Asia/Shanghai'
+    });
+}
+
+// Helper for relative time
+function getRelativeTime(dateStr?: string) {
+    if (!dateStr) return '';
+    const now = new Date();
+    const updated = new Date(dateStr);
+    const diff = now.getTime() - updated.getTime();
+
+    // milliseconds conversion
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (minutes < 60) {
+        return `更新于 ${Math.max(1, minutes)} 分钟前`;
+    }
+
+    if (hours < 24) {
+        return `更新于 ${Math.max(1, hours)} 小时前`;
+    }
+
+    if (days < 7) {
+        return `更新于 ${days} 天前`;
+    }
+
+    if (days < 30) {
+        const weeks = Math.floor(days / 7);
+        return `更新于 ${weeks} 周前`;
+    }
+
+    const months = Math.floor(days / 30);
+    return `更新于 ${months} 月前`;
+}
+
+// Helper for expected decision date
+function getExpectedDecisionDateText(dateStr?: string) {
+    if (!dateStr) return '预计申请提交后1个月内';
+
+    const date = new Date(dateStr);
+    // Add 15 days
+    date.setDate(date.getDate() + 15);
+    // Add 1 month to get to the "farther" month
+    date.setMonth(date.getMonth() + 1);
+
+    return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        timeZone: 'Asia/Shanghai'
+    }) + '前';
+}
+
+function ProgressTimeline({ app }: { app: Application }) {
+    const { status, registeredAt, submittedAt, decisionReleasedAt, enrolledAt } = app;
     // Current Logic:
     // Registration: Always Check
     // Application Submitted: Check if submitted+, else Future
@@ -24,9 +86,11 @@ function ProgressTimeline({ status }: { status: Application['status'] }) {
     const isDecisionReleased = ['decision_released', 'enrolled', 'accepted', 'rejected', 'waitlisted'].includes(status);
     const isEnrolled = status === 'enrolled';
 
+
+
     return (
         <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-100">
-            <h3 className="text-lg font-bold text-foreground mb-6">Progress Timeline</h3>
+            <h3 className="text-lg font-bold text-foreground mb-6">申请进度 Progress Timeline</h3>
             <div className="grid grid-cols-[40px_1fr] gap-x-4">
 
                 {/* --- Step 1: Registration --- */}
@@ -40,8 +104,10 @@ function ProgressTimeline({ status }: { status: Application['status'] }) {
                 </div>
                 {/* Text Column */}
                 <div className="flex flex-col pb-8">
-                    <p className="text-base font-bold leading-normal text-foreground">Registration</p>
-                    <p className="text-sm text-muted-foreground font-normal leading-normal">Completed on May 10, 2025</p>
+                    <p className="text-base font-bold leading-normal text-foreground">注册</p>
+                    <p className="text-sm text-muted-foreground font-normal leading-normal">
+                        {registeredAt ? `完成于 ${formatDate(registeredAt)}` : "已完成"}
+                    </p>
                 </div>
 
                 {/* --- Step 2: Filling Application (New) --- */}
@@ -67,10 +133,10 @@ function ProgressTimeline({ status }: { status: Application['status'] }) {
                 {/* Text Column */}
                 <div className="flex flex-col pb-8 pt-1">
                     <p className={cn("text-base font-bold leading-normal")}>
-                        Filling Application
+                        填写申请
                     </p>
                     <p className="text-sm text-muted-foreground font-normal leading-normal">
-                        {isSubmitted ? "Completed" : "In Progress..."}
+                        {isSubmitted ? "已完成" : "进行中..."}
                     </p>
                 </div>
 
@@ -104,9 +170,9 @@ function ProgressTimeline({ status }: { status: Application['status'] }) {
                 </div>
                 {/* Text Column */}
                 <div className="flex flex-col pb-8 pt-1">
-                    <p className={cn("text-base font-bold leading-normal", !isSubmitted && "text-muted-foreground")}>Application Submitted</p>
+                    <p className={cn("text-base font-bold leading-normal", !isSubmitted && "text-muted-foreground")}>申请已提交</p>
                     <p className="text-sm text-muted-foreground font-normal leading-normal">
-                        {isSubmitted ? "Submitted on June 12, 2025" : "Pending Submission"}
+                        {isSubmitted ? `提交于 ${formatDate(submittedAt)}` : "待提交"}
                     </p>
                 </div>
 
@@ -143,11 +209,11 @@ function ProgressTimeline({ status }: { status: Application['status'] }) {
                         isUnderReview && !isDecisionReleased ? "text-primary dark:text-accent" : // Active color
                             !isUnderReview ? "text-muted-foreground" : "text-foreground"
                     )}>
-                        Under Review
+                        审核中
                     </p>
                     <p className="text-sm text-muted-foreground font-normal leading-normal">
-                        {isUnderReview && !isDecisionReleased ? "Currently in progress by admissions team" :
-                            isDecisionReleased ? "Review completed" : "Pending review"}
+                        {isUnderReview && !isDecisionReleased ? "招生团队正在审核中" :
+                            isDecisionReleased ? "审核已完成" : "等待审核"}
                     </p>
                 </div>
 
@@ -184,10 +250,12 @@ function ProgressTimeline({ status }: { status: Application['status'] }) {
                         "text-base font-bold leading-normal",
                         isDecisionReleased ? "text-foreground" : "text-muted-foreground"
                     )}>
-                        Final Decision
+                        最终决定
                     </p>
                     <p className="text-sm text-muted-foreground font-normal leading-normal">
-                        {isDecisionReleased ? "Decision Available" : "Expected July 15, 2025"}
+                        {isDecisionReleased
+                            ? (decisionReleasedAt ? `结果已发布于 ${formatDate(decisionReleasedAt)}` : "结果已出")
+                            : `预计${getExpectedDecisionDateText(submittedAt)}通知`}
                     </p>
                 </div>
 
@@ -203,10 +271,10 @@ function ProgressTimeline({ status }: { status: Application['status'] }) {
                         {/* Text Column */}
                         <div className="flex flex-col pb-1 pt-1">
                             <p className="text-base font-bold leading-normal text-green-700">
-                                Offer Accepted
+                                接受录取
                             </p>
                             <p className="text-sm text-muted-foreground font-normal leading-normal">
-                                See you this summer!
+                                {enrolledAt ? `完成于 ${formatDate(enrolledAt)}。` : ""}夏天见！
                             </p>
                         </div>
                     </>
@@ -222,13 +290,13 @@ function ApplicationDetails({ app, user }: { app: Application, user: any }) {
     return (
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
             <div className="p-4 border-b bg-[#F9FAFC]">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Details</h3>
+                <h3 className="text-sm font-bold tracking-wider text-muted-foreground">申请信息 Application Information</h3>
             </div>
             <div className="p-5 flex flex-col gap-4">
                 <div className="flex items-start gap-3">
                     <User className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                        <p className="text-xs uppercase font-bold text-muted-foreground">Applicant Name</p>
+                        <p className="text-xs uppercase font-bold text-muted-foreground">申请人姓名</p>
                         <p className="text-sm font-medium">{user.name}</p>
                     </div>
                 </div>
@@ -236,7 +304,7 @@ function ApplicationDetails({ app, user }: { app: Application, user: any }) {
                 <div className="flex items-start gap-3">
                     <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                        <p className="text-xs uppercase font-bold text-muted-foreground">Application ID</p>
+                        <p className="text-xs uppercase font-bold text-muted-foreground">申请编号</p>
                         <p className="text-sm font-medium">#{app.id.slice(0, 8).toUpperCase()}</p>
                     </div>
                 </div>
@@ -244,8 +312,8 @@ function ApplicationDetails({ app, user }: { app: Application, user: any }) {
                 <div className="flex items-start gap-3">
                     <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                        <p className="text-xs uppercase font-bold text-muted-foreground">Submission Date</p>
-                        <p className="text-sm font-medium">{app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : 'N/A'}</p>
+                        <p className="text-xs uppercase font-bold text-muted-foreground">提交日期</p>
+                        <p className="text-sm font-medium">{app.submittedAt ? formatDate(app.submittedAt) : 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -254,14 +322,14 @@ function ApplicationDetails({ app, user }: { app: Application, user: any }) {
                     <Button variant="outline" className="w-full font-bold" asChild>
                         <Link href="/apply">
                             <FilePen className="mr-2 h-4 w-4" strokeWidth={2.5} />
-                            Edit Application
+                            编辑申请
                         </Link>
                     </Button>
                 ) : (
                     <Button variant="outline" className="w-full font-bold" asChild>
                         <Link href="/apply">
                             <Eye className="mr-2 h-4 w-4" strokeWidth={2.5} />
-                            View Full Application
+                            查看完整申请
                         </Link>
                     </Button>
                 )}
@@ -357,8 +425,8 @@ export default function DashboardPage() {
             {/* Header Area */}
             <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-3xl md:text-4xl font-black text-foreground">Application Status</h1>
-                    <p className="text-muted-foreground text-lg">Track the progress of your summer camp application.</p>
+                    <h1 className="text-3xl md:text-4xl font-black text-foreground">申请状态 Application Status</h1>
+                    <p className="text-muted-foreground text-lg">追踪您的夏令营申请进度。</p>
                 </div>
 
             </div>
@@ -377,13 +445,13 @@ export default function DashboardPage() {
                         <div className="relative z-10 flex flex-col gap-4">
                             <div className="flex items-center gap-3">
                                 {app.status === 'enrolled' ? (
-                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold uppercase">Accepted & Confirmed</span>
+                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold uppercase">已录取</span>
                                 ) : app.status === 'decision_released' ? (
-                                    <span className="px-3 py-1 rounded-full bg-accent text-primary text-xs font-bold uppercase">Action Required</span>
+                                    <span className="px-3 py-1 rounded-full bg-accent text-primary text-xs font-bold uppercase">申请进度已更新</span>
                                 ) : (
-                                    <span className="px-3 py-1 rounded-full bg-primary/10 text-primary dark:text-accent text-xs font-bold uppercase">Current Status</span>
+                                    <span className="px-3 py-1 rounded-full bg-primary/10 text-primary dark:text-accent text-xs font-bold uppercase">申请进行中</span>
                                 )}
-                                <span className="text-sm text-muted-foreground">Updated recently</span>
+                                <span className="text-xs text-muted-foreground">{getRelativeTime(app.lastUpdatedAt)}</span>
                             </div>
 
                             {/* MAIN STATUS TEXT */}
@@ -391,27 +459,27 @@ export default function DashboardPage() {
                                 <>
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight">录取成功，已接受 Offer！ 🎉</h2>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        Congratulations! You have accepted our offer. Please complete the tuition payment to secure your spot.
+                                        恭喜！您已接受我们的录取通知。请完成学费缴纳以锁定您的名额。
                                     </p>
                                     <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row gap-4">
                                         <Button size="lg">
                                             前往缴费 <CreditCard className="ml-2 h-5 w-5" />
                                         </Button>
                                         <Button variant="outline" size="lg">
-                                            Download Acceptance Letter <Download className="ml-2 h-5 w-5" />
+                                            下载录取通知书 <Download className="ml-2 h-5 w-5" />
                                         </Button>
                                     </div>
                                 </>
                             ) : app.status === 'decision_released' ? (
                                 <>
-                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Application Results Available 🔔</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">申请结果已发布 🔔</h2>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        The admissions team has completed the review of your application. Please click below to view your result.
+                                        招生团队已完成您的申请审核。请点击下方查看结果。
                                     </p>
                                     <div className="mt-4 pt-4 border-t flex gap-4">
                                         <Button size="lg" asChild>
                                             <Link href="/acceptance">
-                                                查看申请结果 <ArrowRight className="ml-2 h-5 w-5" />
+                                                查看申请结果 <ArrowRight className="h-5 w-5" />
                                             </Link>
                                         </Button>
                                     </div>
@@ -419,14 +487,14 @@ export default function DashboardPage() {
                             ) : app.status === 'draft' ? (
                                 // Draft State
                                 <>
-                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Application In Progress ✍️</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">申请进行中 ✍️</h2>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        Please complete your application form as soon as possible to secure your spot. We look forward to reviewing your application!
+                                        请尽快完成您的申请表以确保名额。我们期待审核您的申请！
                                     </p>
                                     <div className="mt-4 pt-4 border-t flex gap-4">
                                         <Button size="lg" asChild>
                                             <Link href="/apply">
-                                                Continue Application <ArrowRight className="ml-2 h-5 w-5" />
+                                                继续申请 <ArrowRight className="h-5 w-5" />
                                             </Link>
                                         </Button>
                                     </div>
@@ -434,16 +502,16 @@ export default function DashboardPage() {
                             ) : (
                                 // Default: Submitted or Under Review
                                 <>
-                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Your application is under review 👀</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">您的申请正在审核中 👀</h2>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        We have received all your documents. You should hear back from us by July 15th.
+                                        我们已收到您的所有文件。您预计将在{getExpectedDecisionDateText(app.submittedAt)}收到回复。
                                     </p>
                                 </>
                             )}
                         </div>
                     </div>
 
-                    <ProgressTimeline status={app.status} />
+                    <ProgressTimeline app={app} />
 
                 </div>
 
@@ -454,12 +522,12 @@ export default function DashboardPage() {
                     {/* Contact Card */}
                     <div className="bg-primary rounded-xl p-6 text-white relative overflow-hidden">
                         <div className="relative z-10">
-                            <h3 className="font-bold text-lg mb-2">Have questions?</h3>
-                            <p className="text-sm text-white/80 mb-4 opacity-90">If you have any issues with your application status, please reach out to our admissions team.</p>
+                            <h3 className="font-bold text-lg mb-2">需要帮助?</h3>
+                            <p className="text-sm text-white/80 mb-4 opacity-90">请优先查看<Link href="/faq" className="mx-1 font-bold hover:underline cursor-pointer">常见问题Q&A</Link>页面；若问题仍未解决，欢迎您联系我们的招生团队。</p>
                             <Button size="sm" className="w-full sm:w-auto" asChild>
                                 <a href="mailto:admissions@jianshan.com">
-                                    <Mail className="mr-2 h-4 w-4" />
-                                    Email Admissions
+                                    <Mail className="mr-1 h-4 w-4" />
+                                    邮件联系
                                 </a>
                             </Button>
                         </div>

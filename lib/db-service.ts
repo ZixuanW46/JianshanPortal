@@ -77,6 +77,9 @@ export const dbService = {
                 userId: data.userId,
                 status: data.status,
                 submittedAt: data.timeline?.submittedAt,
+                registeredAt: data.timeline?.registeredAt,
+                decisionReleasedAt: data.timeline?.decisionReleasedAt,
+                enrolledAt: data.timeline?.enrolledAt,
                 lastUpdatedAt: data.lastUpdatedAt,
                 personalInfo: {
                     firstName: data.personalInfo?.firstName || '',

@@ -111,7 +111,7 @@ function AdminApplicationDetailContent() {
                                 </div>
                                 <div>
                                     <label className="text-xs text-muted-foreground block">Registered At</label>
-                                    <p className="font-medium">{new Date(application.timeline?.registeredAt || "").toLocaleDateString()}</p>
+                                    <p className="font-medium">{new Date(application.timeline?.registeredAt || "").toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' })}</p>
                                 </div>
                             </CardContent>
                         </Card>
