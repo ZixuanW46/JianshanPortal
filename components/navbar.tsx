@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Tent, Menu, X, User as UserIcon, LogOut } from "lucide-react";
+import { Tent, Menu, X, User as UserIcon, LogOut, LayoutDashboard, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -104,33 +104,76 @@ export function Navbar() {
 
             {/* Mobile Menu */}
             {isMenuOpen && (
-                <div className="sm:hidden border-t p-4 bg-background">
-                    <nav className="flex flex-col gap-4">
-                        <Link
-                            href="/faq"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="text-base font-medium"
-                        >
-                            FAQ
-                        </Link>
-                        {user && (
+                <div className="sm:hidden absolute top-18 left-0 right-0 border-b bg-white/95 backdrop-blur-md shadow-lg animate-in slide-in-from-top-2 fade-in duration-200 z-40">
+                    <nav className="flex flex-col">
+                        {!isAdmin && (
+                            <Link
+                                href="/faq"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-3 px-6 py-4 text-base font-medium text-foreground bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="p-1 bg-gray-100 rounded-md">
+                                    <HelpCircle className="h-4 w-4" />
+                                </div>
+                                FAQ
+                            </Link>
+                        )}
+
+                        {isAdmin && (
+                            <Link
+                                href="/admin/dashboard"
+                                onClick={() => setIsMenuOpen(false)}
+                                className={cn(
+                                    "flex items-center gap-3 px-6 py-4 text-base font-medium bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors",
+                                    pathname.startsWith('/admin') ? "text-primary" : "text-foreground"
+                                )}
+                            >
+                                <div className="p-1 bg-gray-100 rounded-md">
+                                    <LayoutDashboard className="h-4 w-4" />
+                                </div>
+                                Dashboard
+                            </Link>
+                        )}
+
+                        {user ? (
                             <>
-                                <div className="text-base font-medium text-muted-foreground">
-                                    {user.name}
+                                <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100">
+                                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                                        Signed in as
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-1.5 bg-primary/10 rounded-full">
+                                            <UserIcon className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <div className="font-medium text-foreground">
+                                            {user.name || (isAdmin ? 'Admin' : 'Student')}
+                                        </div>
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => {
                                         logout();
                                         setIsMenuOpen(false);
                                     }}
-                                    className="text-left text-base font-medium text-destructive"
+                                    className="flex items-center gap-3 px-6 py-4 text-base font-medium text-destructive bg-white hover:bg-red-50 transition-colors w-full text-left"
                                 >
+                                    <div className="p-1 bg-red-50 rounded-md">
+                                        <LogOut className="h-4 w-4" />
+                                    </div>
                                     Log out
                                 </button>
                             </>
-                        )}
-                        {!user && (
-                            <Link href="/login" onClick={() => setIsMenuOpen(false)}>Log in</Link>
+                        ) : (
+                            <Link
+                                href="/login"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-3 px-6 py-4 text-base font-medium text-primary bg-white hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="p-1 bg-primary/10 rounded-md">
+                                    <UserIcon className="h-4 w-4" />
+                                </div>
+                                Log in
+                            </Link>
                         )}
                     </nav>
                 </div>

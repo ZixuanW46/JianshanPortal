@@ -17,7 +17,10 @@ export function Footer() {
                     <p className="text-sm text-muted-foreground">
                         © {new Date().getFullYear()} Jianshan Academy. All rights reserved.
                     </p>
-                    <div className="flex gap-6">
+                    <div className="flex gap-6 items-center">
+                        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                            沪ICP备2025150971号-2
+                        </a>
                         <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                             Privacy Policy
                         </a>

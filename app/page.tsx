@@ -95,11 +95,21 @@ export default function LandingPage() {
               <Button
                 variant="outline"
                 onClick={() => router.push('/login')}
-                className="h-14 w-full bg-white hover:bg-gray-50 text-gray-700 font-bold gap-2 rounded-xl text-[14px] border-2 border-gray-100 shadow-sm transition-all"
+                className="h-14 w-full bg-white hover:bg-white text-gray-700 hover:text-primary/80 font-bold gap-2 rounded-xl text-[14px] border-2 border-gray-100 hover:border-primary/20 shadow-sm hover:shadow-md transition-all"
               >
                 <Phone className="h-4 w-4" />
                 手机号登录 / 注册
               </Button>
+            </div>
+
+            <div className="mt-8 pb-4 w-full text-center">
+              <div className="text-[10px] text-gray-400">
+                <span>© 2026 Jianshan Academy</span>
+                <span className="mx-2">|</span>
+                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 transition-colors">
+                  沪ICP备2025150971号-2
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -184,6 +194,17 @@ export default function LandingPage() {
                   <Phone className="h-5 w-5" />
                   手机号登录 / 注册
                 </Button>
+              </div>
+
+              <div className="mt-auto pt-6 w-full text-center">
+
+                <div className="text-xs text-muted-foreground/60">
+                  <span>© 2026 Jianshan Academy</span>
+                  <span className="mx-2">|</span>
+                  <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="hover:text-muted-foreground transition-colors">
+                    沪ICP备2025150971号-2
+                  </a>
+                </div>
               </div>
 
             </div>
