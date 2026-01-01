@@ -9,10 +9,10 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     // Hide Navbar/Footer on Landing Page and Forgot Password Page
     // (Login/Register typically also hide these, but sticking to request)
     // Hide Navbar/Footer on Landing Page, Login, Register, and Forgot Password pages
+    const hiddenPaths = ["/login", "/register"];
     const shouldHideLayout =
         pathname === "/" ||
-        pathname === "/login" ||
-        pathname === "/register" ||
+        hiddenPaths.some(path => pathname === path || pathname === `${path}/`) ||
         pathname?.startsWith("/forgot-password");
 
     return (

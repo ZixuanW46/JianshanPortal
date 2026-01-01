@@ -14,11 +14,21 @@ export interface DBApplication {
     personalInfo: {
         firstName: string;
         lastName: string;
-        phone?: string;
-        email?: string; // Added to match Application type
+        name?: string; // Chinese Name
+        englishName?: string;
+        gender?: string;
+        birthDate?: string;
+        nationality?: string;
+        idNumber?: string;
+        phone?: string; // Optional in DB, required in UI
+        email?: string;
         wechatId?: string;
+        emergencyContactName?: string;
+        emergencyContactPhone?: string;
         school?: string;
         grade?: string;
+        interests?: string[];
+        englishProficiency?: string;
     };
     timeline: {
         registeredAt?: string;
@@ -27,10 +37,19 @@ export interface DBApplication {
         enrolledAt?: string;
     };
     lastUpdatedAt: string;
-    // Keep other fields optional/empty to satisfy frontend type if we cast it
     essays?: {
-        question1: string;
-        question2: string;
+        question1?: string;
+        question2?: string;
+        q1Option?: string;
+        q1Content?: string;
+        q2Content?: string;
+    };
+    misc?: {
+        healthCondition?: string;
+        dietaryRestrictions?: string;
+        referralSource?: string;
+        goals?: string[];
+        agreedToTerms?: boolean;
     };
     // Admin specific data
     adminData?: {
@@ -84,15 +103,35 @@ export const dbService = {
                 personalInfo: {
                     firstName: data.personalInfo?.firstName || '',
                     lastName: data.personalInfo?.lastName || '',
+                    name: data.personalInfo?.name || '',
+                    englishName: data.personalInfo?.englishName || '',
+                    gender: data.personalInfo?.gender || '',
+                    birthDate: data.personalInfo?.birthDate || '',
+                    nationality: data.personalInfo?.nationality || '',
+                    idNumber: data.personalInfo?.idNumber || '',
                     phone: data.personalInfo?.phone || '',
-                    email: data.personalInfo?.email || data.email || '', // Fallback to root email if present
+                    email: data.personalInfo?.email || data.email || '',
                     wechatId: data.personalInfo?.wechatId || '',
+                    emergencyContactName: data.personalInfo?.emergencyContactName || '',
+                    emergencyContactPhone: data.personalInfo?.emergencyContactPhone || '',
                     school: data.personalInfo?.school || '',
-                    grade: data.personalInfo?.grade || ''
+                    grade: data.personalInfo?.grade || '',
+                    interests: data.personalInfo?.interests || [],
+                    englishProficiency: data.personalInfo?.englishProficiency || ''
                 },
                 essays: {
                     question1: data.essays?.question1 || '',
-                    question2: data.essays?.question2 || ''
+                    question2: data.essays?.question2 || '',
+                    q1Option: data.essays?.q1Option || '',
+                    q1Content: data.essays?.q1Content || '',
+                    q2Content: data.essays?.q2Content || ''
+                },
+                misc: {
+                    healthCondition: data.misc?.healthCondition || '',
+                    dietaryRestrictions: data.misc?.dietaryRestrictions || '',
+                    referralSource: data.misc?.referralSource || '',
+                    goals: data.misc?.goals || [],
+                    agreedToTerms: data.misc?.agreedToTerms || false
                 }
             } as Application;
         }
@@ -153,7 +192,8 @@ export const dbService = {
             },
             timeline: { registeredAt: timestamp },
             lastUpdatedAt: timestamp,
-            essays: { question1: '', question2: '' }
+            essays: { question1: '', question2: '' },
+            misc: { healthCondition: '', dietaryRestrictions: '', referralSource: '', goals: [], agreedToTerms: false }
         };
 
         try {
@@ -208,6 +248,7 @@ export const dbService = {
             // I will save personalInfo and essays to ensure the app works.
             personalInfo: data.personalInfo,
             essays: data.essays,
+            misc: data.misc,
             // Sync personalInfo.email to root email for notifications
             ...(data.personalInfo?.email ? { email: data.personalInfo.email } : {})
         };

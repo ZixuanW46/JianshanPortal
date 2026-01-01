@@ -21,15 +21,35 @@ export interface Application {
   personalInfo: {
     firstName: string;
     lastName: string;
+    name?: string; // Chinese Name
+    englishName?: string;
+    gender?: string;
+    birthDate?: string;
+    nationality?: string;
+    idNumber?: string; // ID Card or Passport
     phone: string;
-    email?: string; // Added field
+    email?: string;
     wechatId?: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
     school: string;
     grade: string;
+    interests?: string[]; // Max 3
+    englishProficiency?: string; // Score or File URL
   };
   essays: {
-    question1: string;
-    question2: string;
+    question1?: string; // Backwards compatibility or specific storage
+    question2?: string;
+    q1Option?: string; // Selected option for Q1
+    q1Content?: string; // Content for Q1
+    q2Content?: string; // Content for Q2 (English)
+  };
+  misc?: {
+    healthCondition?: string;
+    dietaryRestrictions?: string;
+    referralSource?: string;
+    goals?: string[];
+    agreedToTerms?: boolean;
   };
 }
 
@@ -122,6 +142,7 @@ export const mockApi = {
         lastUpdatedAt: timestamp,
         personalInfo: { firstName: '', lastName: '', phone: '', school: '', grade: '' },
         essays: { question1: '', question2: '' },
+        misc: { healthCondition: '', dietaryRestrictions: '', referralSource: '', goals: [], agreedToTerms: false },
         ...data
       } as Application;
       apps.push(app);
