@@ -148,7 +148,7 @@ export default function AcceptancePage() {
                         <Button
                             onClick={handleConfirm}
                             disabled={loading}
-                            className="h-12 w-full min-w-[200px] bg-primary text-white hover:bg-primary/90 text-base font-bold shadow-md sm:w-auto border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            className="h-12 w-full min-w-[200px] text-base font-bold shadow-md sm:w-auto border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                         >
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Confirm Enrollment

@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { dbService } from "@/lib/db-service";
 import { Loader2, CheckCircle, XCircle, Clock, Send, Info, RotateCcw } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface DecisionCardProps {
     applicationId: string;
@@ -13,6 +22,7 @@ type DecisionType = 'accepted' | 'rejected' | 'waitlisted';
 
 export function DecisionCard({ applicationId, currentInternalDecision, currentPublicStatus, onUpdate }: DecisionCardProps) {
     const [loading, setLoading] = useState(false);
+    const [showReleaseConfirm, setShowReleaseConfirm] = useState(false);
 
     const handleSaveDecision = async (decision: string | null) => {
         setLoading(true);
@@ -27,13 +37,10 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
     };
 
     const handleReleaseResult = async () => {
-        if (!window.confirm(`Are you sure you want to release the result as "${currentInternalDecision}"? This action is immediate and the applicant will see it.`)) {
-            return;
-        }
-
         setLoading(true);
         try {
             await dbService.releaseResult(applicationId);
+            setShowReleaseConfirm(false);
             onUpdate();
         } catch (e) {
             console.error("Failed to release result", e);
@@ -169,7 +176,7 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                 ) : (
                     <>
                         <button
-                            onClick={handleReleaseResult}
+                            onClick={() => setShowReleaseConfirm(true)}
                             disabled={!currentInternalDecision || loading}
                             className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 font-medium ${currentInternalDecision && !loading
                                 ? 'bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5'
@@ -198,6 +205,35 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                     </>
                 )}
             </div>
+
+            <Dialog open={showReleaseConfirm} onOpenChange={setShowReleaseConfirm}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Release Decision</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to release the result as <span className="font-bold text-slate-900">"{currentInternalDecision?.toUpperCase()}"</span>?
+                            This action is immediate and the applicant will be able to view their decision letter.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowReleaseConfirm(false)} disabled={loading}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleReleaseResult}
+                            disabled={loading}
+                            className={
+                                currentInternalDecision === 'accepted' ? 'bg-green-600 hover:bg-green-700' :
+                                    currentInternalDecision === 'rejected' ? 'bg-red-600 hover:bg-red-700' :
+                                        'bg-amber-600 hover:bg-amber-700'
+                            }
+                        >
+                            {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                            Confirm & Release
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

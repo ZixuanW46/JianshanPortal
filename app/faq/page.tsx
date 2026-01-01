@@ -29,7 +29,7 @@ export default function FAQPage() {
                         {/* Sidebar Nav */}
                         <aside className="w-full md:w-64 shrink-0 md:sticky md:top-24">
                             <nav className="flex flex-col gap-2">
-                                <Link href="#application" className="flex items-center justify-between p-3 rounded-lg bg-primary text-primary-foreground font-bold text-sm shadow-md">
+                                <Link href="#application" className="flex items-center justify-between p-3 rounded-lg bg-accent text-accent-foreground font-bold text-sm shadow-md">
                                     <span>Application Process</span>
                                     <ArrowIcon />
                                 </Link>
@@ -55,7 +55,7 @@ export default function FAQPage() {
                                     <p className="font-bold text-primary">Still have questions?</p>
                                     <p className="text-xs text-muted-foreground mt-1">Can't find the answer you're looking for? Please chat to our friendly team.</p>
                                 </div>
-                                <button className="w-full py-2 px-4 bg-accent hover:bg-accent/90 text-primary-foreground text-sm font-bold rounded-lg transition-colors shadow-sm">
+                                <button className="w-full py-2 px-4 bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-bold rounded-lg transition-colors shadow-sm">
                                     Get in touch
                                 </button>
                             </div>

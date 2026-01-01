@@ -12,8 +12,8 @@ export interface DBApplication {
     email?: string; // NEW: Store email for notifications
     status: 'draft' | 'submitted' | 'under_review' | 'decision_released' | 'enrolled' | 'rejected' | 'waitlisted';
     personalInfo: {
-        firstName: string;
-        lastName: string;
+        // firstName: string; // DEPRECATED
+        // lastName: string;  // DEPRECATED
         name?: string; // Chinese Name
         englishName?: string;
         gender?: string;
@@ -38,8 +38,8 @@ export interface DBApplication {
     };
     lastUpdatedAt: string;
     essays?: {
-        question1?: string;
-        question2?: string;
+        // question1?: string; // DEPRECATED
+        // question2?: string; // DEPRECATED
         q1Option?: string;
         q1Content?: string;
         q2Content?: string;
@@ -101,8 +101,8 @@ export const dbService = {
                 enrolledAt: data.timeline?.enrolledAt,
                 lastUpdatedAt: data.lastUpdatedAt,
                 personalInfo: {
-                    firstName: data.personalInfo?.firstName || '',
-                    lastName: data.personalInfo?.lastName || '',
+                    // firstName: data.personalInfo?.firstName || '',
+                    // lastName: data.personalInfo?.lastName || '',
                     name: data.personalInfo?.name || '',
                     englishName: data.personalInfo?.englishName || '',
                     gender: data.personalInfo?.gender || '',
@@ -120,8 +120,8 @@ export const dbService = {
                     englishProficiency: data.personalInfo?.englishProficiency || ''
                 },
                 essays: {
-                    question1: data.essays?.question1 || '',
-                    question2: data.essays?.question2 || '',
+                    // question1: data.essays?.question1 || '',
+                    // question2: data.essays?.question2 || '',
                     q1Option: data.essays?.q1Option || '',
                     q1Content: data.essays?.q1Content || '',
                     q2Content: data.essays?.q2Content || ''
@@ -176,6 +176,15 @@ export const dbService = {
             throw new Error("Unable to create application: Authentication mismatch. Please log out and log in again.");
         }
 
+        // Check if username implies a phone number (u + 11 digits)
+        let autoPhone = '';
+        if (currentUser.username && currentUser.username.startsWith('u') && currentUser.username.length === 12) {
+            const possiblePhone = currentUser.username.substring(1);
+            if (/^\d{11}$/.test(possiblePhone)) {
+                autoPhone = possiblePhone;
+            }
+        }
+
         const timestamp = new Date().toISOString();
         // Do NOT include _id in the data payload for set(), as it's defined by doc(id)
         const initialData: Omit<DBApplication, '_id'> = {
@@ -183,16 +192,16 @@ export const dbService = {
             email: email || '', // Store email if provided
             status: 'draft',
             personalInfo: {
-                firstName: '',
-                lastName: '',
-                phone: '',
+                // firstName: '',
+                // lastName: '',
+                phone: autoPhone, // Auto-fill phone if detected
                 wechatId: '',
                 school: '',
                 grade: ''
             },
             timeline: { registeredAt: timestamp },
             lastUpdatedAt: timestamp,
-            essays: { question1: '', question2: '' },
+            essays: {},
             misc: { healthCondition: '', dietaryRestrictions: '', referralSource: '', goals: [], agreedToTerms: false }
         };
 
@@ -233,8 +242,8 @@ export const dbService = {
         // Extract only what we want to save
         const updates: any = {
             lastUpdatedAt: timestamp,
-            'personalInfo.firstName': data.personalInfo?.firstName,
-            'personalInfo.lastName': data.personalInfo?.lastName,
+            // 'personalInfo.firstName': data.personalInfo?.firstName,
+            // 'personalInfo.lastName': data.personalInfo?.lastName,
             // Per request: "only store name fields... ignore others"
             // But we might want to store others if provided, but let's stick to strict requirement FIRST.
             // User said "只存application form中的姓名的两个field。不管其他的。"
@@ -323,6 +332,25 @@ export const dbService = {
             'timeline.decisionReleasedAt': _.remove(),
             'timeline.enrolledAt': _.remove()
         });
+    },
+
+    // Admin: Progress Application (Draft -> Under Review)
+    async progressApplication(userId: string) {
+        if (!db) return;
+        const timestamp = new Date().toISOString();
+
+        // This is similar to submit but purely admin-driven
+        await db.collection(COLLECTION).doc(userId).update({
+            status: 'under_review',
+            lastUpdatedAt: timestamp,
+            'timeline.submittedAt': timestamp
+        });
+    },
+
+    // Admin: Delete Application
+    async deleteApplication(userId: string) {
+        if (!db) return;
+        await db.collection(COLLECTION).doc(userId).remove();
     }, // Added comma here
 
     // Admin: Get all applications
@@ -417,13 +445,16 @@ export const dbService = {
         // 1. Update Database Status
         await db.collection(COLLECTION).doc(userId).update(updates);
 
-        // 2. Send Email Notification via Cloud Function
+        // 2. Send Notifications (Email + SMS)
+        // Construct full name with English name if available
+        const fullName = `${doc.personalInfo?.name || ''} ${doc.personalInfo?.englishName || ''}`.trim() || 'Applicant';
+        const notifications = [];
+
+        // Email Notification
         if (callFunction && doc.email) {
             console.log(`[db-service] Sending email to ${doc.email} for status: ${publicStatus}`);
-            const fullName = `${doc.personalInfo?.lastName || ''}${doc.personalInfo?.firstName || ''}`.trim() || 'Applicant';
-
-            try {
-                const emailRes = await callFunction({
+            notifications.push(
+                callFunction({
                     name: 'send-email',
                     data: {
                         toEmail: doc.email,
@@ -433,14 +464,30 @@ export const dbService = {
                         },
                         subject: "见山学院申请进度更新"
                     }
-                });
-                console.log("[db-service] Email sent result:", emailRes);
-            } catch (err) {
-                console.error("[db-service] Failed to send email:", err);
-                // Do not throw, as DB update succeeded. Just log error.
-            }
+                }).catch(err => console.error("[db-service] Failed to send email:", err))
+            );
         } else {
             console.warn("[db-service] Skipping email: No email address found for user or callFunction not available.", doc.email);
         }
+
+        // SMS Notification
+        if (callFunction && doc.personalInfo?.phone) {
+            console.log(`[db-service] Sending SMS to ${doc.personalInfo.phone} for status: ${publicStatus}`);
+            notifications.push(
+                callFunction({
+                    name: 'send-sms',
+                    data: {
+                        phoneNumber: doc.personalInfo.phone,
+                        templateId: "2577415",
+                    }
+                }).then(res => console.log("[db-service] SMS sent result:", res))
+                    .catch(err => console.error("[db-service] Failed to send SMS:", err))
+            );
+        } else {
+            console.warn("[db-service] Skipping SMS: No phone number found for user.", doc.personalInfo?.phone);
+        }
+
+        // Wait for all notifications to complete (success or fail)
+        await Promise.allSettled(notifications);
     }
 };

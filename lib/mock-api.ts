@@ -19,8 +19,8 @@ export interface Application {
   lastUpdatedAt: string; // ISO Date
   // Form Data (simplified for now)
   personalInfo: {
-    firstName: string;
-    lastName: string;
+    // firstName: string;
+    // lastName: string;
     name?: string; // Chinese Name
     englishName?: string;
     gender?: string;
@@ -38,8 +38,8 @@ export interface Application {
     englishProficiency?: string; // Score or File URL
   };
   essays: {
-    question1?: string; // Backwards compatibility or specific storage
-    question2?: string;
+    // question1?: string; 
+    // question2?: string;
     q1Option?: string; // Selected option for Q1
     q1Content?: string; // Content for Q1
     q2Content?: string; // Content for Q2 (English)
@@ -140,8 +140,8 @@ export const mockApi = {
         userId,
         status: 'draft',
         lastUpdatedAt: timestamp,
-        personalInfo: { firstName: '', lastName: '', phone: '', school: '', grade: '' },
-        essays: { question1: '', question2: '' },
+        personalInfo: { phone: '', school: '', grade: '' },
+        essays: {},
         misc: { healthCondition: '', dietaryRestrictions: '', referralSource: '', goals: [], agreedToTerms: false },
         ...data
       } as Application;
@@ -213,8 +213,8 @@ export const mockApi = {
 
     // Optional: Clear form data if requested? User said "清空重制", let's assume status reset is the main goal to get back to welcome. 
     // If they want to clear form, we could do:
-    // app.personalInfo = { firstName: '', lastName: '', phone: '', school: '', grade: '' };
-    // app.essays = { question1: '', question2: '' };
+    // app.personalInfo = { phone: '', school: '', grade: '' };
+    // app.essays = { };
     // But usually 'reset' in this context means 'go back to start'. Keeping data might be helpful for testing re-submission.
     // Let's stick to status reset for now as it unblocks the flow.
 

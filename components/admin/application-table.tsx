@@ -17,7 +17,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Eye, Loader2, CheckCircle, Users } from "lucide-react";
+import { ChevronDown, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Eye, Loader2, CheckCircle, Users, RefreshCcw, Play, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { dbService, DBApplication } from "@/lib/db-service";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,9 +61,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
     const safeApps = localApps || [];
     const filteredApps = safeApps.filter(app => {
         const searchTerm = search.toLowerCase();
-        const fullName = (
-            (app.personalInfo?.firstName || "") + " " + (app.personalInfo?.lastName || "")
-        ).toLowerCase();
+        const fullName = (app.personalInfo?.name || "").toLowerCase();
         const schoolName = (app.personalInfo?.school || "").toLowerCase();
 
         const searchMatch = fullName.includes(searchTerm) || schoolName.includes(searchTerm);
@@ -89,8 +87,8 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
         const direction = sortConfig.direction === 'asc' ? 1 : -1;
 
         if (sortConfig.key === 'name') {
-            const nameA = (a.personalInfo?.lastName || "") + (a.personalInfo?.firstName || "");
-            const nameB = (b.personalInfo?.lastName || "") + (b.personalInfo?.firstName || "");
+            const nameA = (a.personalInfo?.name || "");
+            const nameB = (b.personalInfo?.name || "");
             return nameA.localeCompare(nameB, 'zh-CN') * direction;
         }
         if (sortConfig.key === 'school') {
@@ -239,12 +237,52 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
     };
 
     // Helper for Sort Icon
-    // Helper for Sort Icon
     const SortIcon = ({ column }: { column: string }) => {
         if (sortConfig.key !== column) return <ArrowUpDown className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" />;
         return sortConfig.direction === 'asc'
             ? <ArrowUp className="w-3 h-3 text-blue-600" />
             : <ArrowDown className="w-3 h-3 text-blue-600" />;
+    };
+
+    const [confirmAction, setConfirmAction] = useState<{ type: 'reset' | 'progress' | 'delete', userId: string } | null>(null);
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const handleActionClick = (type: 'reset' | 'progress' | 'delete', userId: string) => {
+        setConfirmAction({ type, userId });
+    };
+
+    const confirmActionHandler = async () => {
+        if (!confirmAction) return;
+        setActionLoading(true);
+        try {
+            if (confirmAction.type === 'progress') {
+                await dbService.progressApplication(confirmAction.userId);
+            } else if (confirmAction.type === 'reset') {
+                await dbService.resetApplication(confirmAction.userId);
+            } else if (confirmAction.type === 'delete') {
+                await dbService.deleteApplication(confirmAction.userId);
+            }
+            // Refresh logic - ideally should update local state to avoid full reload
+            router.refresh();
+            // Also update local state for immediate feedback
+            if (confirmAction.type === 'delete') {
+                setLocalApps(prev => prev.filter(a => a.userId !== confirmAction.userId));
+                setSelectedIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(confirmAction.userId);
+                    return next;
+                });
+            } else {
+                // For status changes, full reload or fetch might be safer, but let's try to update optimistically or reload
+                window.location.reload();
+            }
+        } catch (e) {
+            console.error("Action failed", e);
+            alert("Action failed");
+        } finally {
+            setActionLoading(false);
+            setConfirmAction(null);
+        }
     };
 
     return (
@@ -424,14 +462,14 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                         <Checkbox
                                             checked={selectedIds.has(app.userId)}
                                             onCheckedChange={() => toggleSelectRow(app.userId)}
-                                            aria-label={`Select ${app.personalInfo?.lastName}`}
+                                            aria-label={`Select ${app.personalInfo?.name}`}
                                             disabled={!isEligibleForRelease(app)}
                                             className="border-slate-300 rounded w-4 h-4"
                                         />
                                     </TableCell>
                                     <TableCell className="px-6 py-4">
                                         <div>
-                                            <div className="text-slate-900 font-medium">{app.personalInfo?.lastName} {app.personalInfo?.firstName}</div>
+                                            <div className="text-slate-900 font-medium">{app.personalInfo?.name || "No Name"}</div>
                                             <div className="text-slate-500 text-sm">{app.personalInfo?.phone || "No Phone"}</div>
                                         </div>
                                     </TableCell>
@@ -505,13 +543,42 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                             {new Date(app.lastUpdatedAt || "").toLocaleDateString()}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="px-6 py-4 text-right">
-                                        <Link href={`/admin/application?id=${app.userId}`}>
-                                            <Button variant="ghost" size="sm" className="text-slate-700 hover:text-slate-900 transition-colors hover:bg-slate-100">
-                                                <Eye className="h-4 w-4 mr-2" />
-                                                View
+                                    <TableCell className="px-2 py-4">
+                                        <div className="flex justify-end gap-1">
+                                            <Link href={`/admin/application?id=${app.userId}`} title="View">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-700 hover:text-slate-900 transition-colors hover:bg-slate-100">
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                title="Reset to Draft"
+                                                onClick={() => handleActionClick('reset', app.userId)}
+                                            >
+                                                <RefreshCcw className="h-4 w-4" />
                                             </Button>
-                                        </Link>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                title="Progress to Review"
+                                                disabled={['decision_released', 'enrolled', 'under_review', 'rejected', 'waitlisted'].includes(app.status)}
+                                                onClick={() => handleActionClick('progress', app.userId)}
+                                            >
+                                                <Play className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                title="Delete"
+                                                onClick={() => handleActionClick('delete', app.userId)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -542,6 +609,48 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                     </button>
                 </div>
             </div>
+
+            {/* Action Confirmation Modal */}
+            {confirmAction && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-6 animate-in zoom-in-95 duration-200">
+                        {actionLoading ? (
+                            <div className="flex flex-col items-center justify-center py-4">
+                                <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+                                <p className="text-slate-500">Processing...</p>
+                            </div>
+                        ) : (
+                            <>
+                                <h3 className="text-lg font-bold text-slate-900 mb-2 capitalize">
+                                    {confirmAction.type} Application?
+                                </h3>
+                                <p className="text-slate-600 mb-6 text-sm">
+                                    {confirmAction.type === 'reset' && "This will revert the application status to 'Draft'. The user will be able to edit it again."}
+                                    {confirmAction.type === 'progress' && "This will move the application status to 'Under Review'. Make sure the applicant is ready."}
+                                    {confirmAction.type === 'delete' && "Are you sure you want to delete this application? This action cannot be undone."}
+                                </p>
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setConfirmAction(null)}
+                                        className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmActionHandler}
+                                        className={`px-4 py-2 text-white rounded-lg font-medium shadow-sm text-sm ${confirmAction.type === 'delete' ? 'bg-red-600 hover:bg-red-700' :
+                                                confirmAction.type === 'reset' ? 'bg-blue-600 hover:bg-blue-700' :
+                                                    'bg-green-600 hover:bg-green-700'
+                                            }`}
+                                    >
+                                        Confirm
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Release Status Modal */}
             {releaseStage !== 'idle' && (

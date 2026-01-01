@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { dbService, DBApplication } from "@/lib/db-service";
+import app from "@/lib/cloudbase";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
@@ -11,11 +12,13 @@ import { NotesSection } from "@/components/admin/notes-section";
 import { DecisionCard } from "@/components/admin/decision-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { ApplicationForm } from "@/components/apply/application-form";
 
 function AdminApplicationDetailContent() {
     const { user, loading: authLoading, isAdmin } = useAuth();
     const router = useRouter();
     const [application, setApplication] = useState<DBApplication | null>(null);
+
     const [loading, setLoading] = useState(true);
 
     const searchParams = useSearchParams();
@@ -27,6 +30,9 @@ function AdminApplicationDetailContent() {
             const allApps = await dbService.getAllApplications();
             const found = allApps.find(a => a.userId === applicationId);
             if (found) {
+                // Ensure deep objects exist for the form
+                if (!found.misc) found.misc = { healthCondition: '', dietaryRestrictions: '', referralSource: '', goals: [], agreedToTerms: false };
+                if (!found.essays) found.essays = {};
                 setApplication(found);
             }
         } catch (e) {
@@ -75,7 +81,10 @@ function AdminApplicationDetailContent() {
                     </Link>
                     <div className="flex justify-between items-start mt-4">
                         <div>
-                            <h1 className="text-3xl font-bold">{application.personalInfo?.firstName} {application.personalInfo?.lastName}</h1>
+                            <h1 className="text-3xl font-bold">
+                                {application.personalInfo?.name}
+                                {application.personalInfo?.englishName && <span className="text-xl text-muted-foreground ml-2">({application.personalInfo?.englishName})</span>}
+                            </h1>
                             <div className="flex items-center gap-3 mt-2">
                                 <span className="text-muted-foreground">{application.personalInfo?.school}</span>
                                 <StatusBadge status={application.status} />
@@ -90,51 +99,13 @@ function AdminApplicationDetailContent() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                    {/* Left Column: Application Data */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Personal Information</CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs text-muted-foreground block">WeChat ID</label>
-                                    <p className="font-medium">{application.personalInfo?.wechatId || "-"}</p>
-                                </div>
-                                <div>
-                                    <label className="text-xs text-muted-foreground block">Grade</label>
-                                    <p className="font-medium">{application.personalInfo?.grade || "-"}</p>
-                                </div>
-                                <div>
-                                    <label className="text-xs text-muted-foreground block">Phone</label>
-                                    <p className="font-medium">{application.personalInfo?.phone || "-"}</p>
-                                </div>
-                                <div>
-                                    <label className="text-xs text-muted-foreground block">Registered At</label>
-                                    <p className="font-medium">{new Date(application.timeline?.registeredAt || "").toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' })}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Essays</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div>
-                                    <label className="text-sm font-semibold text-primary block mb-2">Question 1</label>
-                                    <p className="text-sm leading-relaxed whitespace-pre-wrap bg-gray-50 p-4 rounded border">
-                                        {application.essays?.question1 || "No answer provided."}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-semibold text-primary block mb-2">Question 2</label>
-                                    <p className="text-sm leading-relaxed whitespace-pre-wrap bg-gray-50 p-4 rounded border">
-                                        {application.essays?.question2 || "No answer provided."}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
+                    {/* Left Column: Application Data Reused UI */}
+                    <div className="lg:col-span-2">
+                        <ApplicationForm
+                            app={application as any}
+                            onChange={() => { }}
+                            isReadonly={true}
+                        />
                     </div>
 
                     {/* Right Column: Admin Tools */}

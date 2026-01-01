@@ -1,0 +1,9 @@
+{
+    "name": "send-sms",
+    "version": "1.0.0",
+    "description": "Send SMS via Tencent Cloud SMS",
+    "main": "index.js",
+    "dependencies": {
+        "tencentcloud-sdk-nodejs": "^4.0.0"
+    }
+}

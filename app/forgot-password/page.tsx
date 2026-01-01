@@ -196,7 +196,7 @@ export default function ForgotPasswordPage() {
             <Button
                 type="submit"
                 disabled={loading}
-                className={`mt-5 h-12 w-full bg-primary hover:bg-primary/90 text-white font-bold ${isMobile ? 'text-[12px] rounded-xl' : 'tracking-wide'} border-none shadow-lg hover:shadow-xl outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all`}
+                className={`mt-5 h-12 w-full font-bold ${isMobile ? 'text-[12px] rounded-xl' : 'tracking-wide'} border-none shadow-lg hover:shadow-xl outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all`}
             >
                 {loading && <Loader2 className={`mr-2 ${isMobile ? 'h-3 w-3' : 'h-4 w-4'} animate-spin`} />}
                 重置密码

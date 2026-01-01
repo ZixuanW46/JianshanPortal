@@ -194,7 +194,7 @@ export default function LoginPage() {
             <Button
                 type="submit"
                 disabled={loading}
-                className={`mt-2 h-12 w-full bg-primary hover:bg-primary/90 text-white font-bold tracking-wide border-none shadow-lg hover:shadow-xl outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all ${isMobileLayout ? 'text-[12px] rounded-xl' : ''}`}
+                className={`mt-2 h-12 w-full font-bold tracking-wide border-none shadow-lg hover:shadow-xl outline-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all ${isMobileLayout ? 'text-[12px] rounded-xl' : ''}`}
             >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 登录
