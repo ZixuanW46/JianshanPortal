@@ -20,12 +20,12 @@ export default function LandingPage() {
   }, [user, loading, router]);
 
   return (
-    <div className="min-h-screen w-full bg-white lg:p-6 flex items-center justify-center">
+    <div className="min-h-screen w-full bg-white lg:p-6 lg:flex lg:items-center lg:justify-center">
 
       {/* =======================
                 MOBILE LAYOUT (lg:hidden)
                ======================= */}
-      <div className="lg:hidden flex flex-col w-full h-[100dvh] overflow-hidden bg-white">
+      <div className="lg:hidden flex flex-col w-full h-[100vh] overflow-hidden bg-white">
 
         {/* Top "Poster" Section */}
         <div className="relative h-[45vh] w-full bg-slate-900 shrink-0 overflow-hidden">

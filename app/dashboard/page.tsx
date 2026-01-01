@@ -297,7 +297,7 @@ function ApplicationDetails({ app, user }: { app: Application, user: any }) {
                     <User className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                         <p className="text-xs uppercase font-bold text-muted-foreground">申请人姓名</p>
-                        <p className="text-sm font-medium">{user.name}</p>
+                        <p className="text-sm font-medium">{app.personalInfo?.name || <span className="italic text-muted-foreground">未填写</span>}</p>
                     </div>
                 </div>
                 <div className="h-px bg-border w-full"></div>
