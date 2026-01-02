@@ -462,8 +462,10 @@ export default function DashboardPage() {
                                         恭喜！您已接受我们的录取通知。请完成学费缴纳以锁定您的名额。
                                     </p>
                                     <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row gap-4">
-                                        <Button size="lg">
-                                            前往缴费 <CreditCard className="ml-2 h-5 w-5" />
+                                        <Button size="lg" asChild>
+                                            <Link href="/dashboard/payment">
+                                                前往缴费 <CreditCard className="ml-2 h-5 w-5" />
+                                            </Link>
                                         </Button>
                                         <Button variant="outline" size="lg">
                                             下载录取通知书 <Download className="ml-2 h-5 w-5" />

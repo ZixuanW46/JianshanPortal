@@ -39,14 +39,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         // 监听登录状态变化
         if (!auth) {
+            console.log("[AuthContext] Auth not initialized yet");
             setLoading(false);
             return;
         }
+
+        console.log("[AuthContext] Setting up onLoginStateChanged listener");
 
         // @ts-ignore - cloudbase types might be missing or incomplete in this context
         const authStateListener = (auth as any).onLoginStateChanged((loginState: any) => {
             if (loginState) {
                 // 已登录
+                console.log("[AuthContext] Login state changed: Logged in", loginState.user);
                 setUser(loginState.user);
             } else {
                 // 未登录
@@ -230,11 +234,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!auth) throw new Error("Auth not initialized");
 
         setLoading(true);
+        console.log("[AuthContext] loginWithWechat started");
         try {
             const providerId = "wx_open"; // 微信开放平台
             // Use current origin + callback path for redirect
             // e.g., http://localhost:3000/auth/callback or https://jianshan.com/auth/callback
             const providerUri = `${window.location.origin}/auth/callback`;
+            console.log("[AuthContext] Provider URI:", providerUri);
             const state = `wx_open_${Date.now()}`; // Random state
 
             // @ts-ignore
@@ -260,23 +266,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!auth) throw new Error("Auth not initialized");
 
         setLoading(true);
+        console.log("[AuthContext] handleWechatCallback started", { code, state });
         try {
             // 1. Exchange code for token
+            const providerUri = `${window.location.origin}/auth/callback`;
+            console.log("[AuthContext] Exchanging code for token with URI:", providerUri);
+
             // @ts-ignore
             const res = await (auth as any).grantProviderToken({
                 provider_id: "wx_open",
                 // IMPORTANT: Must match the URI used in genProviderRedirectUri
-                provider_redirect_uri: `${window.location.origin}/auth/callback`,
+                provider_redirect_uri: providerUri,
                 provider_code: code,
             });
+
+            console.log("[AuthContext] grantProviderToken result:", res);
 
             const { provider_token } = res;
 
             // 2. Sign in with the token
             // @ts-ignore
             await (auth as any).signInWithProvider({
-                provider_token,
+                provider_id: "wx_open",           // 尝试加上
+                provider_token: provider_token,
+                force_disable_sign_up: false,     // 显式要求允许注册
+                sync_profile: true,
             });
+
+            console.log("[AuthContext] signInWithProvider successful");
 
             // 3. User listener (onLoginStateChanged) will trigger and update user state + router redirect if needed
             // But we can also manually push to dashboard here if we want to be explicit, 

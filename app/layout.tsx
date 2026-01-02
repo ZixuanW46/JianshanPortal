@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+// import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { LayoutWrapper } from "@/components/layout-wrapper";
 
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  display: 'swap',
-});
+// const plusJakarta = Plus_Jakarta_Sans({
+//   subsets: ["latin"],
+//   variable: "--font-plus-jakarta",
+//   display: 'swap',
+// });
 
 export const metadata: Metadata = {
   title: "Jianshan Academy Portal",
@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning className={`${plusJakarta.className} antialiased min-h-screen flex flex-col`}>
+      <body suppressHydrationWarning className={`antialiased min-h-screen flex flex-col`}>
         <AuthProvider>
           <LayoutWrapper>
             {children}
