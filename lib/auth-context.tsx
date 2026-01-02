@@ -19,6 +19,8 @@ interface AuthContextType {
     sendSmsCode: (mobile: string) => Promise<void>;
     loginWithCode: (mobile: string, code: string) => Promise<void>;
     registerWithMobile: (mobile: string, code: string, password?: string) => Promise<void>;
+    loginWithWechat: () => Promise<void>;
+    handleWechatCallback: (code: string, state: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -224,6 +226,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const loginWithWechat = async () => {
+        if (!auth) throw new Error("Auth not initialized");
+
+        setLoading(true);
+        try {
+            const providerId = "wx_open"; // 微信开放平台
+            // Use current origin + callback path for redirect
+            // e.g., http://localhost:3000/auth/callback or https://jianshan.com/auth/callback
+            const providerUri = `${window.location.origin}/auth/callback`;
+            const state = `wx_open_${Date.now()}`; // Random state
+
+            // @ts-ignore
+            const { uri } = await (auth as any).genProviderRedirectUri({
+                provider_id: providerId,
+                provider_redirect_uri: providerUri,
+                state: state,
+                // other_params: {} 
+            });
+
+            console.log("Redirecting to WeChat login:", uri);
+            // Redirect to the generated WeChat login page
+            window.location.href = uri;
+
+        } catch (error) {
+            console.error("Failed to init WeChat login:", error);
+            setLoading(false); // Only set loading false if we fail. If success, we redirect away.
+            throw error;
+        }
+    };
+
+    const handleWechatCallback = async (code: string, state: string) => {
+        if (!auth) throw new Error("Auth not initialized");
+
+        setLoading(true);
+        try {
+            // 1. Exchange code for token
+            // @ts-ignore
+            const res = await (auth as any).grantProviderToken({
+                provider_id: "wx_open",
+                // IMPORTANT: Must match the URI used in genProviderRedirectUri
+                provider_redirect_uri: `${window.location.origin}/auth/callback`,
+                provider_code: code,
+            });
+
+            const { provider_token } = res;
+
+            // 2. Sign in with the token
+            // @ts-ignore
+            await (auth as any).signInWithProvider({
+                provider_token,
+            });
+
+            // 3. User listener (onLoginStateChanged) will trigger and update user state + router redirect if needed
+            // But we can also manually push to dashboard here if we want to be explicit, 
+            // though Page component usually handles redirection on user state change.
+            router.replace('/dashboard');
+
+        } catch (error) {
+            console.error("WeChat callback failed:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Legacy register method (disabled or adapted)
     const register = async (email: string, name?: string) => {
         console.warn("Please use registerWithMobile");
@@ -255,7 +322,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             logout,
             sendSmsCode,
             loginWithCode,
-            registerWithMobile
+            registerWithMobile,
+            loginWithWechat,
+            handleWechatCallback
         }}>
             {children}
         </AuthContext.Provider>

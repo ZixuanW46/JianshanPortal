@@ -11,7 +11,7 @@ import { MessagesSquare, Phone } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, loginWithWechat } = useAuth();
 
   useEffect(() => {
     if (!loading && user) {
@@ -86,6 +86,7 @@ export default function LandingPage() {
             <div className="space-y-4 mt-8 w-full">
               <Button
                 variant="default"
+                onClick={() => loginWithWechat()}
                 className="h-14 w-full bg-[#07C160] hover:bg-[#06ad56] text-white font-bold gap-2 rounded-xl text-[14px] shadow-lg outline-none border-none ring-0 focus:ring-0 focus:outline-none transition-all"
               >
                 <Image src="/wechat-btn-logo.png" alt="WeChat" width={20} height={20} className="h-5 w-5 object-contain" />
@@ -174,6 +175,7 @@ export default function LandingPage() {
               <div className="space-y-4 mt-8 w-full">
                 <Button
                   variant="default"
+                  onClick={() => loginWithWechat()}
                   className="h-14 w-full bg-[#07C160] hover:bg-[#06ad56] text-white font-bold gap-3 shadow-lg hover:shadow-xl rounded-xl outline-none border-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
                 >
                   <Image src="/wechat-btn-logo.png" alt="WeChat" width={24} height={24} className="h-6 w-6 object-contain" />
