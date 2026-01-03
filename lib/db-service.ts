@@ -1,5 +1,5 @@
 import { db, callFunction } from '@/lib/cloudbase';
-import { Application } from '@/lib/mock-api'; // Re-use type or define new one? Let's use clean types here.
+import { Application } from '@/lib/types';
 
 // Simplify Application type for DB to match requirement (Name + Status)
 // But we still need to match the Shape expected by frontend UI to avoid massive refactor.

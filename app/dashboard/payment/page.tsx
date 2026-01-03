@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { dbService } from "@/lib/db-service";
-import { Application } from "@/lib/mock-api";
+import { Application } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Loader2, CreditCard, ChevronLeft, MapPin, Calendar, User, FileText, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import Link from "next/link";

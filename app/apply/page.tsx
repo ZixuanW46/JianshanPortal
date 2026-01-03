@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Application } from "@/lib/mock-api";
+import { Application } from "@/lib/types";
 import { dbService } from "@/lib/db-service";
 import { Button } from "@/components/ui/button";
 import { Loader2, Save, AlertCircle } from "lucide-react";

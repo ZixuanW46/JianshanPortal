@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { mockApi, Application } from "@/lib/mock-api";
+import { Application } from "@/lib/types";
 import { dbService } from "@/lib/db-service";
 import { Button } from "@/components/ui/button";
 import { Check, Clock, FileText, Calendar, Mail, Loader2, ArrowRight, CreditCard, Download, Flag, PenTool, User, Eye, FilePen } from "lucide-react";
