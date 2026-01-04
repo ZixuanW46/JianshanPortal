@@ -1,0 +1,9 @@
+{
+    "name": "check-order-timeout",
+    "version": "1.0.0",
+    "description": "Check Order Timeout",
+    "main": "index.js",
+    "dependencies": {
+        "alipay-sdk": "^3.6.1"
+    }
+}

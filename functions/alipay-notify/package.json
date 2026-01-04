@@ -1,0 +1,10 @@
+{
+    "name": "alipay-notify",
+    "version": "1.0.0",
+    "description": "Handle Alipay Notify",
+    "main": "index.js",
+    "dependencies": {
+        "alipay-sdk": "^3.6.1",
+        "wx-server-sdk": "latest"
+    }
+}

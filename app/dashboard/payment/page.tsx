@@ -43,13 +43,48 @@ export default function PaymentPage() {
         }
     }, [user, authLoading, router]);
 
-    const handlePayment = () => {
-        // Mock Alipay Jump
-        // In reality, this would call a backend API to get a signed payment URL
-        const alipayUrl = "https://www.alipay.com"; // Placeholder
-        const confirm = window.confirm("即将跳转至支付宝进行支付，确认继续？");
-        if (confirm) {
-            window.open(alipayUrl, "_blank");
+    const handlePayment = async () => {
+        if (!app || !user) return;
+
+        try {
+            setLoading(true);
+            const { callFunction } = await import("@/lib/cloudbase");
+
+            if (!callFunction) {
+                throw new Error("SDK not initialized");
+            }
+
+            // @ts-ignore
+            const uid = user.uid || user.id || user._id;
+
+            // Call Cloud Function to get Alipay URL
+            const res = await callFunction({
+                name: "create-alipay-order",
+                data: {
+                    userId: uid,
+                    amount: 0.1, // Fixed amount for now as per UI
+                    subject: "2026 见山夏令营学费 Jianshan Summer Camp Tuition",
+                    returnUrl: window.location.origin + "/dashboard/payment/success"
+                }
+            });
+
+            console.log("Payment Init Res:", res);
+
+            if (res.result && res.result.code === 0) {
+                const { payUrl } = res.result.data;
+                // Redirect to Alipay
+                if (payUrl) {
+                    window.location.href = payUrl;
+                }
+            } else {
+                alert("创建支付订单失败，请稍后重试。\n" + (res.result?.message || (res as any).message || "未知错误"));
+            }
+
+        } catch (err: any) {
+            console.error("Payment Error:", err);
+            alert("支付启动失败: " + err.message);
+        } finally {
+            setLoading(false);
         }
     };
 

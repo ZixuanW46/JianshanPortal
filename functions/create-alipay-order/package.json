@@ -1,0 +1,10 @@
+{
+    "name": "create-alipay-order",
+    "version": "1.0.0",
+    "description": "Generate Alipay Order",
+    "main": "index.js",
+    "dependencies": {
+        "alipay-sdk": "^3.6.1",
+        "wx-server-sdk": "latest"
+    }
+}

@@ -1,7 +1,7 @@
 export interface Application {
     id: string;
     userId: string;
-    status: 'draft' | 'submitted' | 'under_review' | 'decision_released' | 'enrolled' | 'rejected' | 'waitlisted';
+    status: 'draft' | 'submitted' | 'under_review' | 'decision_released' | 'enrolled' | 'paid' | 'rejected' | 'waitlisted';
     submittedAt?: string; // ISO Date
     registeredAt?: string; // ISO Date
     decisionReleasedAt?: string; // ISO Date
@@ -40,5 +40,11 @@ export interface Application {
         referralSource?: string;
         goals?: string[];
         agreedToTerms?: boolean;
+    };
+    payment?: {
+        status: 'unpaid' | 'paid' | 'pending';
+        orderId?: string; // Links to orders collection outTradeNo
+        paidAt?: string; // ISO Date
+        amount?: number;
     };
 }

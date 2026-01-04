@@ -82,9 +82,10 @@ function ProgressTimeline({ app }: { app: Application }) {
     // Final Decision: Check/Flag(Color) if decision+, Future if under_review or before.
 
     const isSubmitted = status !== 'draft';
-    const isUnderReview = ['under_review', 'decision_released', 'enrolled', 'accepted', 'rejected', 'waitlisted'].includes(status);
-    const isDecisionReleased = ['decision_released', 'enrolled', 'accepted', 'rejected', 'waitlisted'].includes(status);
-    const isEnrolled = status === 'enrolled';
+    const isUnderReview = ['under_review', 'decision_released', 'enrolled', 'paid', 'accepted', 'rejected', 'waitlisted'].includes(status);
+    const isDecisionReleased = ['decision_released', 'enrolled', 'paid', 'accepted', 'rejected', 'waitlisted'].includes(status);
+    const isEnrolled = ['enrolled', 'paid'].includes(status);
+    const isPaid = status === 'paid';
 
 
 
@@ -259,23 +260,57 @@ function ProgressTimeline({ app }: { app: Application }) {
                     </p>
                 </div>
 
-                {/* --- Optional Step 5: Offer Accepted --- */}
-                {isEnrolled && (
+                {/* --- Optional Step 5: Offer Accepted & Payment --- */}
+                {(isEnrolled || isPaid) && (
                     <>
-                        {/* Icon Column */}
+                        {/* Icon Column - Enrolled */}
                         <div className="flex flex-col items-center gap-1 pt-0">
+                            {/* Line from top */}
+
+                            {/* Icon */}
                             <div className="size-8 rounded-full bg-green-50 border-[3px] border-green-600 relative z-10 shadow-[0_0_15px_rgba(22,163,74,0.6)] flex items-center justify-center text-green-600">
-                                <Check size={20} className="text-green-600 animate-pulse" strokeWidth={3} />
+                                <Check size={20} className="text-green-600" strokeWidth={3} />
                             </div>
+                            {/* Vertical Line to Paid */}
+                            <div className={cn(
+                                "w-[2px] h-full min-h-[40px]",
+                                isPaid ? "bg-green-600" : "bg-muted"
+                            )}></div>
                         </div>
-                        {/* Text Column */}
-                        <div className="flex flex-col pb-1 pt-1">
+                        {/* Text Column - Enrolled */}
+                        <div className="flex flex-col pb-8 pt-1">
                             <p className="text-base font-bold leading-normal text-green-700">
                                 接受录取
                             </p>
                             <p className="text-sm text-muted-foreground font-normal leading-normal">
-                                {enrolledAt ? `完成于 ${formatDate(enrolledAt)}。` : ""}夏天见！
+                                {enrolledAt ? `完成于 ${formatDate(enrolledAt)}` : "已完成"}
                             </p>
+                        </div>
+
+                        {/* Icon Column - Payment */}
+                        <div className="flex flex-col items-center gap-1 pt-0">
+                            {isPaid ? (
+                                <div className="size-8 rounded-full bg-green-600 text-white flex items-center justify-center z-10 shadow-lg shadow-green-200">
+                                    <Check size={20} strokeWidth={3} />
+                                </div>
+                            ) : (
+                                <div className="size-8 rounded-full border-[3px] border-green-600 bg-white relative z-10 animate-pulse flex items-center justify-center">
+                                    <CreditCard size={14} className="text-green-600" />
+                                </div>
+                            )}
+                        </div>
+                        {/* Text Column - Payment */}
+                        <div className="flex flex-col pb-1 pt-1">
+                            <p className={cn(
+                                "text-base font-bold leading-normal",
+                                isPaid ? "text-green-700" : "text-foreground"
+                            )}>
+                                学费缴纳
+                            </p>
+                            <p className="text-sm text-muted-foreground font-normal leading-normal">
+                                {isPaid ? (app.payment?.paidAt ? `支付于 ${formatDate(app.payment.paidAt)}` : "支付成功") : "等待支付..."}
+                            </p>
+                            {isPaid && <p className="text-sm font-bold text-green-600 mt-1">夏天见！☀️</p>}
                         </div>
                     </>
                 )}
@@ -316,6 +351,27 @@ function ApplicationDetails({ app, user }: { app: Application, user: any }) {
                         <p className="text-sm font-medium">{app.submittedAt ? formatDate(app.submittedAt) : 'N/A'}</p>
                     </div>
                 </div>
+
+                {app.payment?.status === 'paid' && (
+                    <>
+                        <div className="h-px bg-border w-full"></div>
+                        <div className="flex items-start gap-3">
+                            <CreditCard className="h-5 w-5 text-green-600 mt-0.5" />
+                            <div>
+                                <p className="text-xs uppercase font-bold text-green-600">支付信息</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    订单号: <span className="font-mono">{app.payment.orderId || 'N/A'}</span>
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    支付时间: {formatDate(app.payment.paidAt)}
+                                </p>
+                                <p className="text-sm font-bold text-green-700 mt-1">
+                                    ¥ {app.payment.amount || '7899'}
+                                </p>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
             <div className="p-4 border-t bg-[#F9FAFC]">
                 {app.status === 'draft' ? (
@@ -439,13 +495,15 @@ export default function DashboardPage() {
                         {/* Dynamic Backgrounds based on status */}
                         <div className={cn(
                             "absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl transition-all duration-700",
-                            app.status === 'enrolled' ? "bg-green-500/10" : "bg-accent/10"
+                            (app.status === 'enrolled' || app.status === 'paid') ? "bg-green-500/10" : "bg-accent/10"
                         )} />
 
                         <div className="relative z-10 flex flex-col gap-4">
                             <div className="flex items-center gap-3">
-                                {app.status === 'enrolled' ? (
-                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold uppercase">已录取</span>
+                                {app.status === 'paid' ? (
+                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold uppercase">已完成所有流程</span>
+                                ) : app.status === 'enrolled' ? (
+                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold uppercase">已录取 - 待缴费</span>
                                 ) : app.status === 'decision_released' ? (
                                     <span className="px-3 py-1 rounded-full bg-accent text-primary text-xs font-bold uppercase">申请进度已更新</span>
                                 ) : (
@@ -455,7 +513,21 @@ export default function DashboardPage() {
                             </div>
 
                             {/* MAIN STATUS TEXT */}
-                            {app.status === 'enrolled' ? (
+                            {app.status === 'paid' ? (
+                                <>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight text-green-600">支付成功！夏天见！☀️</h2>
+                                    <p className="text-muted-foreground leading-relaxed">
+                                        您已成功缴纳学费，名额已锁定。我们非常期待在 2026 见山夏令营与您相见！
+                                        <br />
+                                        更多入营指南将在营期开始前通过邮件发送给您。
+                                    </p>
+                                    <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row gap-4">
+                                        <Button variant="outline" size="lg">
+                                            下载录取通知书 <Download className="ml-2 h-5 w-5" />
+                                        </Button>
+                                    </div>
+                                </>
+                            ) : app.status === 'enrolled' ? (
                                 <>
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight">录取成功，已接受 Offer！ 🎉</h2>
                                     <p className="text-muted-foreground leading-relaxed">

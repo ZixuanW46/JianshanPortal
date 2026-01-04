@@ -10,7 +10,7 @@ export interface DBApplication {
     _openid?: string;
     userId: string;
     email?: string; // NEW: Store email for notifications
-    status: 'draft' | 'submitted' | 'under_review' | 'decision_released' | 'enrolled' | 'rejected' | 'waitlisted';
+    status: 'draft' | 'submitted' | 'under_review' | 'decision_released' | 'enrolled' | 'paid' | 'rejected' | 'waitlisted';
     personalInfo: {
         // firstName: string; // DEPRECATED
         // lastName: string;  // DEPRECATED
@@ -50,6 +50,12 @@ export interface DBApplication {
         referralSource?: string;
         goals?: string[];
         agreedToTerms?: boolean;
+    };
+    payment?: {
+        status: 'unpaid' | 'paid' | 'pending';
+        orderId?: string;
+        paidAt?: string;
+        amount?: number;
     };
     // Admin specific data
     adminData?: {
@@ -132,6 +138,12 @@ export const dbService = {
                     referralSource: data.misc?.referralSource || '',
                     goals: data.misc?.goals || [],
                     agreedToTerms: data.misc?.agreedToTerms || false
+                },
+                payment: {
+                    status: data.payment?.status || 'unpaid',
+                    orderId: data.payment?.orderId,
+                    paidAt: data.payment?.paidAt,
+                    amount: data.payment?.amount
                 }
             } as Application;
         }
