@@ -10,19 +10,28 @@ export function Section({ number, title, titleEn, description, children }: { num
     useEffect(() => {
         const handleScroll = () => {
             if (!cardRef.current || !textRef.current) return;
-            const rect = cardRef.current.getBoundingClientRect();
+
+            // Use the card's top area (where the number is displayed)
+            const cardRect = cardRef.current.getBoundingClientRect();
             const viewHeight = window.innerHeight;
             const center = viewHeight / 2;
-            const elementCenter = rect.top + rect.height / 2;
+            // Number is at the top of the card, use top + some offset for number center
+            const numberApproxCenter = cardRect.top + 60; // ~60px from card top
 
-            // Calculate distance from center (0 = at center)
-            const dist = Math.abs(center - elementCenter);
+            // Calculate distance from viewport center
+            const dist = Math.abs(center - numberApproxCenter);
 
-            // Calculate intensity (0 to 1)
-            // Full intensity at center, fades out as it moves away
-            // Range: within 60% of viewport height
-            let intensity = 1 - (dist / (viewHeight * 0.5));
-            intensity = Math.max(0.05, Math.min(intensity, 0.4)); // Cap max opacity at 0.4, min at 0.05
+            // Calculate intensity
+            // Peak intensity at center (0.3), fades out linearly as it moves away
+            const maxOpacity = 0.3;
+            const minOpacity = 0.05;
+            // The distance at which opacity drops to 0 (before clamping)
+            // viewHeight * 0.5 means it hits 0 exactly at the viewport edge if centered perfectly
+            // viewHeight * 0.6 makes it fade a bit slower
+            const range = viewHeight * 0.5;
+
+            let intensity = maxOpacity * (1 - dist / range);
+            intensity = Math.max(minOpacity, intensity); // Cap min opacity at 0.05
 
             textRef.current.style.opacity = intensity.toString();
         };

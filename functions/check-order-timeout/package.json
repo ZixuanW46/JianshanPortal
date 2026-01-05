@@ -4,6 +4,7 @@
     "description": "Check Order Timeout",
     "main": "index.js",
     "dependencies": {
-        "alipay-sdk": "^3.6.1"
+        "alipay-sdk": "^3.6.1",
+        "wx-server-sdk": "latest"
     }
 }

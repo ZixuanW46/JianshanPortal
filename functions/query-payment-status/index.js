@@ -90,7 +90,8 @@ exports.main = async (event, context) => {
                             'payment.orderId': order.outTradeNo,
                             'payment.amount': Number(order.amount),
                             'status': 'paid',
-                            'timeline.enrolledAt': db.serverDate()
+                            'lastUpdatedAt': new Date().toISOString()
+                            // Note: timeline.enrolledAt is set when user accepts offer, not on payment
                         }
                     });
                 }

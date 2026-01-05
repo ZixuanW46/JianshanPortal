@@ -5,7 +5,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
 exports.main = async (event, context) => {
-    const { userId, amount, subject, returnUrl } = event;
+    const { userId, amount, subject, returnUrl, isMobile } = event;
 
     if (!amount || !userId) {
         return { code: 400, message: "Missing required parameters: userId, amount" };
@@ -31,8 +31,51 @@ exports.main = async (event, context) => {
     });
 
     const outTradeNo = `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const defaultReturnUrl = 'https://jianshanacademy.cn/dashboard/payment/success';
+    const notifyUrl = 'https://jianshanacademy.cn/payment/notify';
 
-    // 1. Create Local Order
+    // 1. Call Alipay SDK FIRST (don't create local order until Alipay succeeds)
+    let payUrl;
+    try {
+        if (isMobile) {
+            // H5 Mobile Payment (alipay.trade.wap.pay)
+            // This can launch Alipay App on mobile devices
+            payUrl = await alipaySdk.pageExec('alipay.trade.wap.pay', {
+                method: 'GET',
+                bizContent: {
+                    out_trade_no: outTradeNo,
+                    product_code: 'QUICK_WAP_WAY',  // H5 mobile payment product code
+                    total_amount: totalAmount,
+                    subject: subject || 'Tuition Payment',
+                    timeout_express: '30m',
+                    quit_url: returnUrl || defaultReturnUrl,  // URL to redirect if user cancels
+                },
+                return_url: returnUrl || defaultReturnUrl,
+                notify_url: notifyUrl
+            });
+            console.log("Created H5 WAP payment URL");
+        } else {
+            // PC Page Payment (alipay.trade.page.pay)
+            payUrl = await alipaySdk.pageExec('alipay.trade.page.pay', {
+                method: 'GET',
+                bizContent: {
+                    out_trade_no: outTradeNo,
+                    product_code: 'FAST_INSTANT_TRADE_PAY',  // PC payment product code
+                    total_amount: totalAmount,
+                    subject: subject || 'Tuition Payment',
+                    timeout_express: '30m',
+                },
+                return_url: returnUrl || defaultReturnUrl,
+                notify_url: notifyUrl
+            });
+            console.log("Created PC Page payment URL");
+        }
+    } catch (err) {
+        console.error("Alipay SDK Execute Failed", err);
+        return { code: 500, message: "Alipay Signature Failed", error: err.message };
+    }
+
+    // 2. Only create local order AFTER Alipay returns successfully
     try {
         await db.collection('orders').add({
             data: {
@@ -43,35 +86,19 @@ exports.main = async (event, context) => {
                 status: 'PENDING',
                 createdAt: db.serverDate(),
                 expireAt: new Date(Date.now() + 30 * 60 * 1000),
-                clientIp: event.clientIp || '0.0.0.0'
+                clientIp: event.clientIp || '0.0.0.0',
+                paymentType: isMobile ? 'H5_WAP' : 'PC_PAGE'  // Record payment type
             }
         });
     } catch (err) {
         console.error("DB Create Order Failed", err);
+        // Note: Alipay order exists but local record failed - this is acceptable
+        // as check-order-timeout or notify will handle sync later
         return { code: 500, message: "Failed to create order record" };
     }
 
-    // 2. Call Alipay SDK
-    try {
-        const result = await alipaySdk.pageExec('alipay.trade.page.pay', {
-            method: 'GET',
-            bizContent: {
-                out_trade_no: outTradeNo,
-                product_code: 'FAST_INSTANT_TRADE_PAY',
-                total_amount: totalAmount,
-                subject: subject || 'Tuition Payment',
-                timeout_express: '30m',
-            },
-            return_url: returnUrl || 'https://jianshanacademy.cn/dashboard/payment/success',
-            notify_url: 'https://jianshanacademy.cn/payment/notify'
-        });
-
-        return {
-            code: 0,
-            data: { payUrl: result, outTradeNo }
-        };
-    } catch (err) {
-        console.error("Alipay SDK Execute Failed", err);
-        return { code: 500, message: "Alipay Signature Failed", error: err.message };
-    }
+    return {
+        code: 0,
+        data: { payUrl, outTradeNo, paymentType: isMobile ? 'H5_WAP' : 'PC_PAGE' }
+    };
 };

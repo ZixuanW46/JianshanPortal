@@ -101,7 +101,8 @@ exports.main = async (event, context) => {
                         'payment.paidAt': db.serverDate(),
                         'payment.amount': Number(total_amount),
                         'status': 'paid',
-                        'timeline.enrolledAt': db.serverDate()
+                        'lastUpdatedAt': new Date().toISOString()
+                        // Note: timeline.enrolledAt is set when user accepts offer, not on payment
                     }
                 });
             }

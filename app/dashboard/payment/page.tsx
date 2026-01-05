@@ -57,6 +57,11 @@ export default function PaymentPage() {
             // @ts-ignore
             const uid = user.uid || user.id || user._id;
 
+            // Detect mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                navigator.userAgent
+            );
+
             // Call Cloud Function to get Alipay URL
             const res = await callFunction({
                 name: "create-alipay-order",
@@ -64,7 +69,8 @@ export default function PaymentPage() {
                     userId: uid,
                     amount: 0.1, // Fixed amount for now as per UI
                     subject: "2026 见山夏令营学费 Jianshan Summer Camp Tuition",
-                    returnUrl: window.location.origin + "/dashboard/payment/success"
+                    returnUrl: window.location.origin + "/dashboard/payment/success",
+                    isMobile: isMobile
                 }
             });
 

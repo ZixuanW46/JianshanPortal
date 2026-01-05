@@ -120,7 +120,8 @@ async function processOrder(order, alipaySdk) {
                         'payment.orderId': outTradeNo,
                         'payment.amount': Number(order.amount),
                         'status': 'paid',
-                        'timeline.enrolledAt': db.serverDate()
+                        'lastUpdatedAt': new Date().toISOString()
+                        // Note: timeline.enrolledAt is set when user accepts offer, not on payment
                     }
                 });
             }

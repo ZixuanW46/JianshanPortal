@@ -419,7 +419,31 @@ export default function DashboardPage() {
             const uid = user.uid || user.id || user._id;
             console.log("Dashboard fetching app for:", uid);
             try {
-                const myApp = await dbService.getMyApplication(uid);
+                let myApp = await dbService.getMyApplication(uid);
+
+                // Auto-sync payment status if user might have paid but notification was missed
+                if (myApp && myApp.status === 'enrolled' && myApp.payment?.status !== 'paid') {
+                    console.log("[Dashboard] Enrolled but not paid - syncing payment status...");
+                    try {
+                        const { callFunction } = await import("@/lib/cloudbase");
+                        if (callFunction) {
+                            const syncResult = await callFunction({
+                                name: "query-payment-status",
+                                data: { userId: uid }
+                            });
+                            console.log("[Dashboard] Payment sync result:", syncResult);
+
+                            // If sync found payment was made, re-fetch the application
+                            if (syncResult?.result?.code === 0 && syncResult.result.data?.status === 'PAID') {
+                                console.log("[Dashboard] Payment confirmed! Re-fetching application...");
+                                myApp = await dbService.getMyApplication(uid);
+                            }
+                        }
+                    } catch (syncErr) {
+                        console.warn("[Dashboard] Payment sync failed (non-critical):", syncErr);
+                    }
+                }
+
                 setApp(myApp);
 
                 // If no app (shouldn't happen if registered), redirect or handle.
