@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
+import { useBackground } from "@/lib/use-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import { Loader2, Lock, Smartphone, Eye, EyeOff, MessagesSquare } from "lucide-r
 export default function ForgotPasswordPage() {
     const router = useRouter();
     const { registerWithMobile, sendSmsCode } = useAuth();
+    const backgroundImage = useBackground();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -218,7 +220,7 @@ export default function ForgotPasswordPage() {
                     <div
                         className="absolute inset-0 bg-cover"
                         style={{
-                            backgroundImage: "url('/login-bg.jpg')",
+                            backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')`,
                             backgroundPosition: "68% 35%"
                         }}
                     />
@@ -278,7 +280,7 @@ export default function ForgotPasswordPage() {
                 {/* Background Image with Overlay */}
                 <div
                     className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-                    style={{ backgroundImage: "url('/login-bg.jpg')" }}
+                    style={{ backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')` }}
                 />
                 <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 

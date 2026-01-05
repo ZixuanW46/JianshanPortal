@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useBackground } from "@/lib/use-background";
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -11,7 +12,8 @@ import { MessagesSquare, Phone } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, loading, loginWithWechat } = useAuth();
+  const { user, loading } = useAuth();
+  const backgroundImage = useBackground();
 
   useEffect(() => {
     if (!loading && user) {
@@ -33,7 +35,7 @@ export default function LandingPage() {
           <div
             className="absolute inset-0 bg-cover"
             style={{
-              backgroundImage: "url('/login-bg.jpg')",
+              backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')`,
               backgroundPosition: "68% 35%"
             }}
           />
@@ -86,20 +88,20 @@ export default function LandingPage() {
             <div className="space-y-4 mt-8 w-full">
               <Button
                 variant="default"
-                onClick={() => loginWithWechat()}
-                className="h-14 w-full bg-[#07C160] hover:bg-[#06ad56] text-white font-bold gap-2 rounded-xl text-[14px] shadow-lg outline-none border-none ring-0 focus:ring-0 focus:outline-none transition-all"
+                onClick={() => router.push('/login')}
+                className="h-14 w-full bg-primary hover:bg-primary/90 text-white font-bold gap-2 rounded-xl text-[14px] shadow-lg outline-none border-none ring-0 focus:ring-0 focus:outline-none transition-all"
               >
-                <Image src="/wechat-btn-logo.png" alt="WeChat" width={20} height={20} className="h-5 w-5 object-contain" />
-                微信快捷登录
+                <Phone className="h-4 w-4" />
+                已注册用户登录
               </Button>
 
               <Button
                 variant="outline"
-                onClick={() => router.push('/login')}
+                onClick={() => router.push('/register')}
                 className="h-14 w-full bg-white hover:bg-white text-gray-700 hover:text-primary/80 font-bold gap-2 rounded-xl text-[14px] border-2 border-gray-100 hover:border-primary/20 shadow-sm hover:shadow-md transition-all"
               >
-                <Phone className="h-4 w-4" />
-                手机号登录 / 注册
+                <MessagesSquare className="h-4 w-4" />
+                新用户注册
               </Button>
             </div>
 
@@ -124,7 +126,7 @@ export default function LandingPage() {
         {/* Background Image */}
         <div
           className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-          style={{ backgroundImage: "url('/login-bg.jpg')" }}
+          style={{ backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')` }}
         />
         <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
@@ -175,26 +177,26 @@ export default function LandingPage() {
               <div className="space-y-4 mt-8 w-full">
                 <Button
                   variant="default"
-                  onClick={() => loginWithWechat()}
-                  className="h-14 w-full bg-[#07C160] hover:bg-[#06ad56] text-white font-bold gap-3 shadow-lg hover:shadow-xl rounded-xl outline-none border-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
+                  onClick={() => router.push('/login')}
+                  className="h-14 w-full bg-primary hover:bg-primary/90 text-white font-bold gap-3 shadow-lg hover:shadow-xl rounded-xl outline-none border-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
                 >
-                  <Image src="/wechat-btn-logo.png" alt="WeChat" width={24} height={24} className="h-6 w-6 object-contain" />
-                  微信登录
+                  <Phone className="h-5 w-5" />
+                  已注册用户登录
                 </Button>
 
                 <div className="relative flex py-3 items-center">
                   <div className="flex-grow border-t border-primary/10"></div>
-                  <span className="flex-shrink-0 mx-4 text-muted-foreground/70 text-sm uppercase font-semibold tracking-wider">其他方式</span>
+                  <span className="flex-shrink-0 mx-4 text-muted-foreground/70 text-sm uppercase font-semibold tracking-wider">或者是</span>
                   <div className="flex-grow border-t border-primary/10"></div>
                 </div>
 
                 <Button
                   variant="outline"
-                  onClick={() => router.push('/login')}
+                  onClick={() => router.push('/register')}
                   className="h-14 w-full bg-white/60 hover:bg-white text-primary hover:text-primary/80 font-bold gap-3 border-1 border-primary/10 hover:border-primary/20 shadow-sm hover:shadow-md rounded-xl transition-all"
                 >
-                  <Phone className="h-5 w-5" />
-                  手机号登录 / 注册
+                  <MessagesSquare className="h-5 w-5" />
+                  新用户注册
                 </Button>
               </div>
 

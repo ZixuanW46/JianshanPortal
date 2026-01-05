@@ -19,8 +19,6 @@ interface AuthContextType {
     sendSmsCode: (mobile: string) => Promise<void>;
     loginWithCode: (mobile: string, code: string) => Promise<void>;
     registerWithMobile: (mobile: string, code: string, password?: string) => Promise<void>;
-    loginWithWechat: () => Promise<void>;
-    handleWechatCallback: (code: string, state: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -230,84 +228,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const loginWithWechat = async () => {
-        if (!auth) throw new Error("Auth not initialized");
-
-        setLoading(true);
-        console.log("[AuthContext] loginWithWechat started");
-        try {
-            const providerId = "wx_open"; // 微信开放平台
-            // Use current origin + callback path for redirect
-            // e.g., http://localhost:3000/auth/callback or https://jianshan.com/auth/callback
-            const providerUri = `${window.location.origin}/auth/callback`;
-            console.log("[AuthContext] Provider URI:", providerUri);
-            const state = `wx_open_${Date.now()}`; // Random state
-
-            // @ts-ignore
-            const { uri } = await (auth as any).genProviderRedirectUri({
-                provider_id: providerId,
-                provider_redirect_uri: providerUri,
-                state: state,
-                // other_params: {} 
-            });
-
-            console.log("Redirecting to WeChat login:", uri);
-            // Redirect to the generated WeChat login page
-            window.location.href = uri;
-
-        } catch (error) {
-            console.error("Failed to init WeChat login:", error);
-            setLoading(false); // Only set loading false if we fail. If success, we redirect away.
-            throw error;
-        }
-    };
-
-    const handleWechatCallback = async (code: string, state: string) => {
-        if (!auth) throw new Error("Auth not initialized");
-
-        setLoading(true);
-        console.log("[AuthContext] handleWechatCallback started", { code, state });
-        try {
-            // 1. Exchange code for token
-            const providerUri = `${window.location.origin}/auth/callback`;
-            console.log("[AuthContext] Exchanging code for token with URI:", providerUri);
-
-            // @ts-ignore
-            const res = await (auth as any).grantProviderToken({
-                provider_id: "wx_open",
-                // IMPORTANT: Must match the URI used in genProviderRedirectUri
-                provider_redirect_uri: providerUri,
-                provider_code: code,
-            });
-
-            console.log("[AuthContext] grantProviderToken result:", res);
-
-            const { provider_token } = res;
-
-            // 2. Sign in with the token
-            // @ts-ignore
-            await (auth as any).signInWithProvider({
-                provider_id: "wx_open",           // 尝试加上
-                provider_token: provider_token,
-                force_disable_sign_up: false,     // 显式要求允许注册
-                sync_profile: true,
-            });
-
-            console.log("[AuthContext] signInWithProvider successful");
-
-            // 3. User listener (onLoginStateChanged) will trigger and update user state + router redirect if needed
-            // But we can also manually push to dashboard here if we want to be explicit, 
-            // though Page component usually handles redirection on user state change.
-            router.replace('/dashboard');
-
-        } catch (error) {
-            console.error("WeChat callback failed:", error);
-            throw error;
-        } finally {
-            setLoading(false);
-        }
-    };
-
     // Legacy register method (disabled or adapted)
     const register = async (email: string, name?: string) => {
         console.warn("Please use registerWithMobile");
@@ -339,9 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             logout,
             sendSmsCode,
             loginWithCode,
-            registerWithMobile,
-            loginWithWechat,
-            handleWechatCallback
+            registerWithMobile
         }}>
             {children}
         </AuthContext.Provider>

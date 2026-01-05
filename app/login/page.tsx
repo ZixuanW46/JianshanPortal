@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
+import { useBackground } from "@/lib/use-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import { isAdmin } from "@/lib/utils";
 export default function LoginPage() {
     const router = useRouter();
     const { login, sendSmsCode, loginWithCode } = useAuth();
+    const backgroundImage = useBackground();
     const [loading, setLoading] = useState(false);
 
     // Login Method State: 'password' | 'code'
@@ -216,7 +218,7 @@ export default function LoginPage() {
                     <div
                         className="absolute inset-0 bg-cover"
                         style={{
-                            backgroundImage: "url('/login-bg.jpg')",
+                            backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')`,
                             backgroundPosition: "68% 35%" // Slightly top-right from center
                         }}
                     />
@@ -265,19 +267,7 @@ export default function LoginPage() {
 
                             {renderForm(true)}
 
-                            <div className="relative flex py-1 items-center">
-                                <div className="flex-grow border-t border-gray-100"></div>
-                                <span className="flex-shrink-0 mx-4 text-gray-400 text-[10px] uppercase font-medium tracking-wider">其他登录方式</span>
-                                <div className="flex-grow border-t border-gray-100"></div>
-                            </div>
 
-                            <Button
-                                variant="default"
-                                className="h-12 w-full bg-[#07C160] hover:bg-[#06ad56] text-white font-bold gap-2 rounded-xl text-[12px] outline-none border-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                            >
-                                <Image src="/wechat-btn-logo.png" alt="WeChat" width={16} height={16} className="h-4 w-4 object-contain" />
-                                微信登录
-                            </Button>
 
                             <div className="text-center mt-2 pb-6">
                                 <p className="text-[12px] text-gray-500">
@@ -300,7 +290,7 @@ export default function LoginPage() {
                 {/* Background Image with Overlay */}
                 <div
                     className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-                    style={{ backgroundImage: "url('/login-bg.jpg')" }}
+                    style={{ backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')` }}
                 />
                 <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
