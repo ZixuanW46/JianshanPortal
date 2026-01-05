@@ -43,16 +43,16 @@ export function IdeaOptionCard({
                 className="absolute inset-0 bg-cover bg-center z-0"
                 style={{ backgroundImage: `url(${imagePath})` }}
                 initial={{ opacity: 0 }}
-                animate={{ 
+                animate={{
                     opacity: isSelected ? 0.35 : 0,
                     filter: isSelected ? "blur(0px)" : "blur(10px)",
                     scale: isSelected ? 1 : 1.1
                 }}
                 transition={{ duration: 0.8 }}
             />
-            
+
             {/* Overlay Gradient for Text Readability when Selected */}
-            <motion.div 
+            <motion.div
                 className={cn("absolute inset-0 z-0 bg-gradient-to-r", isSelected ? "from-white/90 via-white/70 to-white/40" : "from-transparent to-transparent")}
                 animate={{ opacity: isSelected ? 1 : 0 }}
             />
@@ -60,7 +60,7 @@ export function IdeaOptionCard({
             <div className="relative z-10 p-5 sm:p-6">
                 <div className="flex items-start gap-4">
                     {/* Icon Circle */}
-                    <motion.div 
+                    <motion.div
                         layout
                         className={cn(
                             "p-3 rounded-full shrink-0 transition-colors duration-300",
@@ -73,7 +73,7 @@ export function IdeaOptionCard({
                     <div className="flex-1 space-y-2">
                         {/* Title & Short Desc */}
                         <div>
-                            <motion.h4 
+                            <motion.h4
                                 layout
                                 className={cn(
                                     "font-black text-lg sm:text-x",
@@ -83,9 +83,9 @@ export function IdeaOptionCard({
                                 {title}
                             </motion.h4>
                             {!isSelected && (
-                                <motion.p 
-                                    initial={{ opacity: 0 }} 
-                                    animate={{ opacity: 1 }} 
+                                <motion.p
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     className="text-slate-500 text-sm mt-1 font-medium"
                                 >
@@ -103,7 +103,7 @@ export function IdeaOptionCard({
                                     exit={{ opacity: 0, height: 0 }}
                                     transition={{ duration: 0.4, ease: "easeInOut" }}
                                 >
-                                    <p className="text-slate-800 text-sm sm:text-base leading-relaxed font-medium pt-2 border-t border-primary/20 mt-2">
+                                    <p className="text-slate-600 text-sm leading-relaxed font-medium pt-2 border-t border-primary/20 mt-2">
                                         {fullText}
                                     </p>
                                 </motion.div>

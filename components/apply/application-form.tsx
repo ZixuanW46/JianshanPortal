@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ArrowRight, CheckCircle2, AlertCircle, Quote, Sparkles, BrainCircuit, Rocket, CalendarIcon } from "lucide-react";
+import { Loader2, ArrowRight, CheckCircle2, AlertCircle, Quote, Sparkles, BrainCircuit, Rocket, CalendarIcon, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { FileUpload } from "@/components/ui/file-upload";
 import { IdeaOptionCard } from "@/components/apply/IdeaOptionCard";
 import { Section } from "@/components/apply/section";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ApplicationFormProps {
     app: Application;
@@ -30,6 +31,8 @@ interface ApplicationFormProps {
 }
 
 export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, onAutoSave, onFieldSave, saving = false, userPhone }: ApplicationFormProps) {
+
+    const [isHostSchoolNo, setIsHostSchoolNo] = React.useState(false);
 
     // Helper for array toggle
     const handleArrayToggle = (section: string, field: string, item: string, max: number = 3) => {
@@ -53,7 +56,181 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
     return (
         <div className="space-y-8">
             {/* Part 1: Basic Info */}
-            <Section number="01" title="先认识一下你" titleEn="Basic Info" description="请确保姓名与身份证/护照一致">
+            {/* Part 1: Camp Selection */}
+            <Section number="01" title="选择营地" titleEn="Camp Selection" description="请选择您要报名的营地">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Shanghai Card */}
+                    <div
+                        onClick={() => !isReadonly && onChange('personalInfo', 'camp', 'shanghai')}
+                        className={cn(
+                            "group cursor-pointer relative overflow-hidden rounded-2xl border-2 transition-all duration-300 h-[240px]",
+                            app.personalInfo.camp === 'shanghai'
+                                ? "border-primary shadow-lg"
+                                : "border-slate-100 bg-white hover:border-primary/30 hover:shadow-md"
+                        )}
+                    >
+                        {/* Selected Checkmark */}
+                        {app.personalInfo.camp === 'shanghai' && (
+                            <div className="absolute top-4 right-4 z-30 bg-white rounded-full p-1 shadow-sm animate-in fade-in zoom-in duration-300">
+                                <CheckCircle2 className="w-6 h-6 text-primary fill-primary/10" />
+                            </div>
+                        )}
+
+                        {/* Background Layer - Cool Art (Visible on Select) */}
+                        <div
+                            className={cn(
+                                "absolute inset-0 z-0 transition-opacity duration-500",
+                                app.personalInfo.camp === 'shanghai' ? "opacity-100" : "opacity-0"
+                            )}
+                        >
+                            <div className="absolute inset-0 bg-blue-600 mix-blend-multiply opacity-90 z-10" />
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src="/assets/camp-shanghai-bg.png"
+                                alt=""
+                                className="w-full h-full object-cover grayscale opacity-60 scale-100"
+                            />
+                        </div>
+
+                        {/* Background Layer - Line Art (Visible on Default) */}
+                        <div
+                            className={cn(
+                                "absolute bottom-2 right-0 w-38 h-38 z-0 transition-opacity",
+                                app.personalInfo.camp === 'shanghai'
+                                    ? "opacity-0 duration-0"
+                                    : "opacity-30 grayscale group-hover:opacity-50 duration-400 delay-300"
+                            )}
+                        >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/assets/camp-shanghai.png" alt="" className="w-full h-full object-contain" />
+                        </div>
+
+                        <div className="p-8 relative z-20 h-full flex flex-col justify-between">
+                            <div>
+                                <h3
+                                    className={cn(
+                                        "text-4xl font-black tracking-tighter mb-2 transition-colors duration-300",
+                                        app.personalInfo.camp === 'shanghai' ? "text-white" : "text-slate-900"
+                                    )}
+                                    style={{ fontFamily: 'var(--font-heading)' }} // Assuming a heading font variable exists, or fallback
+                                >
+                                    Shanghai
+                                </h3>
+                                <div className={cn(
+                                    "text-lg font-medium transition-colors duration-300",
+                                    app.personalInfo.camp === 'shanghai' ? "text-blue-100" : "text-slate-500"
+                                )}>
+                                    上海
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <div className={cn(
+                                    "text-sm font-medium transition-colors duration-300 flex items-center gap-2",
+                                    app.personalInfo.camp === 'shanghai' ? "text-white" : "text-slate-600"
+                                )}>
+
+                                    <span>地点：上海赫贤学校</span>
+                                </div>
+                                <div className={cn(
+                                    "text-sm font-medium transition-colors duration-300 flex items-center gap-2",
+                                    app.personalInfo.camp === 'shanghai' ? "text-blue-100" : "text-slate-400"
+                                )}>
+
+                                    <span>时间：2026年7月6日 - 7月12日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Hangzhou Card */}
+                    <div
+                        onClick={() => !isReadonly && onChange('personalInfo', 'camp', 'hangzhou')}
+                        className={cn(
+                            "group cursor-pointer relative overflow-hidden rounded-2xl border-2 transition-all duration-300 h-[240px]",
+                            app.personalInfo.camp === 'hangzhou'
+                                ? "border-teal-500 shadow-lg"
+                                : "border-slate-100 bg-white hover:border-teal-500/30 hover:shadow-md"
+                        )}
+                    >
+                        {/* Selected Checkmark */}
+                        {app.personalInfo.camp === 'hangzhou' && (
+                            <div className="absolute top-4 right-4 z-30 bg-white rounded-full p-1 shadow-sm animate-in fade-in zoom-in duration-300">
+                                <CheckCircle2 className="w-6 h-6 text-teal-600 fill-teal-50" />
+                            </div>
+                        )}
+
+                        {/* Background Layer - Cool Art (Visible on Select) */}
+                        <div
+                            className={cn(
+                                "absolute inset-0 z-0 transition-opacity duration-500",
+                                app.personalInfo.camp === 'hangzhou' ? "opacity-100" : "opacity-0"
+                            )}
+                        >
+                            <div className="absolute inset-0 bg-teal-600 mix-blend-multiply opacity-90 z-10" />
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src="/assets/camp-hangzhou-bg.png"
+                                alt=""
+                                className="w-full h-full object-cover grayscale opacity-60 scale-100"
+                            />
+                        </div>
+
+                        {/* Background Layer - Line Art (Visible on Default) */}
+                        <div
+                            className={cn(
+                                "absolute bottom-2 right-2 w-32 h-32 z-0 transition-opacity",
+                                app.personalInfo.camp === 'hangzhou'
+                                    ? "opacity-0 duration-0"
+                                    : "opacity-30 grayscale group-hover:opacity-50 duration-400 delay-300"
+                            )}
+                        >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/assets/camp-hangzhou-line.png" alt="" className="w-full h-full object-contain" />
+                        </div>
+
+                        <div className="p-8 relative z-20 h-full flex flex-col justify-between">
+                            <div>
+                                <h3
+                                    className={cn(
+                                        "text-4xl font-black tracking-tighter mb-2 transition-colors duration-300",
+                                        app.personalInfo.camp === 'hangzhou' ? "text-white" : "text-slate-900"
+                                    )}
+                                    style={{ fontFamily: 'var(--font-heading)' }}
+                                >
+                                    Hangzhou
+                                </h3>
+                                <div className={cn(
+                                    "text-lg font-medium transition-colors duration-300",
+                                    app.personalInfo.camp === 'hangzhou' ? "text-teal-100" : "text-slate-500"
+                                )}>
+                                    杭州
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <div className={cn(
+                                    "text-sm font-medium transition-colors duration-300 flex items-center gap-2",
+                                    app.personalInfo.camp === 'hangzhou' ? "text-white" : "text-slate-600"
+                                )}>
+
+                                    <span>地点：杭州橄榄树学校</span>
+                                </div>
+                                <div className={cn(
+                                    "text-sm font-medium transition-colors duration-300 flex items-center gap-2",
+                                    app.personalInfo.camp === 'hangzhou' ? "text-teal-100" : "text-slate-400"
+                                )}>
+
+                                    <span>时间：2026年8月2日 - 8月8日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Section>
+
+            {/* Part 2: Basic Info */}
+            <Section number="02" title="先认识一下你" titleEn="Basic Info" description="请确保姓名与身份证/护照一致">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <Label>姓名 (中文)</Label>
@@ -178,29 +355,9 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
             </Section>
 
             {/* Part 2: Contact Info */}
-            <Section number="02" title="怎么联系你" titleEn="Contact" description="便于我们发送录取通知及重要信息">
+            {/* Part 3: Contact Info */}
+            <Section number="03" title="怎么联系你" titleEn="Contact" description="便于我们发送录取通知及重要信息">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label>手机号</Label>
-                        {userPhone ? (
-                            <>
-                                <Input value={userPhone} disabled className="bg-slate-100/50" />
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <CheckCircle2 className="h-3 w-3 text-green-600" /> 注册手机号，不可修改
-                                </p>
-                            </>
-                        ) : (
-                            <>
-                                <Input
-                                    value={app.personalInfo.phone || ''}
-                                    onChange={e => onChange('personalInfo', 'phone', e.target.value)}
-                                    disabled={isReadonly}
-                                    placeholder="请输入您的手机号"
-                                />
-                                <p className="text-xs text-muted-foreground">请填写您的联系电话</p>
-                            </>
-                        )}
-                    </div>
                     <div className="space-y-2">
                         <Label>电子邮箱</Label>
                         <Input
@@ -214,84 +371,206 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                         <Input
                             value={app.personalInfo.wechatId || ''}
                             onChange={e => onChange('personalInfo', 'wechatId', e.target.value)}
-                            placeholder="WeChat ID" disabled={isReadonly}
+                            placeholder="学生微信号" disabled={isReadonly}
                         />
                     </div>
-                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-orange-50/50 rounded-xl border border-orange-100">
-                        <div className="md:col-span-2 text-sm font-semibold text-orange-800 flex items-center gap-2">
-                            <AlertCircle className="h-4 w-4" /> 紧急联系人 (必填)
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-orange-900/80">紧急联系人姓名</Label>
-                            <Input
-                                value={app.personalInfo.emergencyContactName || ''}
-                                onChange={e => onChange('personalInfo', 'emergencyContactName', e.target.value)}
-                                placeholder="父母或监护人姓名" disabled={isReadonly} className="bg-white"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-orange-900/80">紧急联系人电话</Label>
-                            <Input
-                                value={app.personalInfo.emergencyContactPhone || ''}
-                                onChange={e => onChange('personalInfo', 'emergencyContactPhone', e.target.value)}
-                                placeholder="联系电话" disabled={isReadonly} className="bg-white"
-                            />
-                        </div>
+                    <div className="space-y-2">
+                        <Label>紧急联系人姓名</Label>
+                        <Input
+                            value={app.personalInfo.emergencyContactName || ''}
+                            onChange={e => onChange('personalInfo', 'emergencyContactName', e.target.value)}
+                            placeholder="父母或监护人姓名" disabled={isReadonly}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>紧急联系人电话</Label>
+                        <Input
+                            value={app.personalInfo.emergencyContactPhone || ''}
+                            onChange={e => onChange('personalInfo', 'emergencyContactPhone', e.target.value)}
+                            placeholder="联系电话" disabled={isReadonly}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>紧急联系人微信号</Label>
+                        <Input
+                            value={app.personalInfo.emergencyContactWechat || ''}
+                            onChange={e => onChange('personalInfo', 'emergencyContactWechat', e.target.value)}
+                            placeholder="父母或监护人微信号" disabled={isReadonly}
+                        />
                     </div>
                 </div>
             </Section>
 
             {/* Part 3: Education */}
-            <Section number="03" title="关于你的学业" titleEn="Education" description="你的学术旅程">
+            {/* Part 4: Education */}
+            < Section number="04" title="关于你的学业" titleEn="Education" description="你的学术旅程" >
                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label>就读学校</Label>
-                            <Input
-                                value={app.personalInfo.school || ''}
-                                onChange={e => onChange('personalInfo', 'school', e.target.value)}
-                                placeholder="School Name" disabled={isReadonly}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>就读年级</Label>
-                            <Select disabled={isReadonly} value={app.personalInfo.grade} onValueChange={v => onChange('personalInfo', 'grade', v)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Grade" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'].map(g => (
-                                        <SelectItem key={g} value={g}>{g}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                    {(() => {
+                        const camp = app.personalInfo.camp;
+                        let hostSchoolName = '';
+                        let hostSchoolLabel = '';
+                        if (camp === 'shanghai') {
+                            hostSchoolName = '上海赫贤学校';
+                            hostSchoolLabel = '上海赫贤';
+                        }
+                        if (camp === 'hangzhou') {
+                            hostSchoolName = '杭州橄榄树学校';
+                            hostSchoolLabel = '杭州橄榄树';
+                        }
+
+                        // Determine render state
+                        const isHostSchool = !!hostSchoolName && app.personalInfo.school === hostSchoolName;
+                        const showInput = isHostSchoolNo || (!!app.personalInfo.school && !isHostSchool && !!hostSchoolName);
+
+                        return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Slot 1: School Question or Standard Input */}
+                                <div className="space-y-2">
+                                    {!hostSchoolName ? (
+                                        <>
+                                            <Label>就读学校</Label>
+                                            <Input
+                                                value={app.personalInfo.school || ''}
+                                                onChange={e => onChange('personalInfo', 'school', e.target.value)}
+                                                placeholder="School Name" disabled={isReadonly}
+                                            />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Label className="text-sm text-slate-900 font-medium leading-snug">
+                                                是否为{hostSchoolLabel}本校学生？
+                                            </Label>
+                                            <div className="flex items-center gap-4 h-10">
+                                                <RadioGroup
+                                                    disabled={isReadonly}
+                                                    value={isHostSchool ? 'yes' : (showInput ? 'no' : undefined)}
+                                                    onValueChange={(val) => {
+                                                        if (val === 'yes') {
+                                                            onChange('personalInfo', 'school', hostSchoolName);
+                                                            setIsHostSchoolNo(false);
+                                                        } else {
+                                                            if (isHostSchool) {
+                                                                onChange('personalInfo', 'school', '');
+                                                            }
+                                                            setIsHostSchoolNo(true);
+                                                        }
+                                                    }}
+                                                    className="flex space-x-4"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="yes" id="school-yes" />
+                                                        <Label htmlFor="school-yes" className="font-normal cursor-pointer">是</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="no" id="school-no" />
+                                                        <Label htmlFor="school-no" className="font-normal cursor-pointer">否</Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Slot 2: School Input (Conditional) */}
+                                {hostSchoolName && showInput && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                                        <Label>就读学校</Label>
+                                        <Input
+                                            value={app.personalInfo.school || ''}
+                                            onChange={e => onChange('personalInfo', 'school', e.target.value)}
+                                            placeholder="请输入就读学校名称"
+                                            disabled={isReadonly}
+                                            autoFocus
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Slot 3 (or 2): Grade */}
+                                <div className="space-y-2">
+                                    <Label>就读年级</Label>
+                                    <Select disabled={isReadonly} value={app.personalInfo.grade} onValueChange={v => onChange('personalInfo', 'grade', v)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select Grade" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'].map(g => (
+                                                <SelectItem key={g} value={g}>{g}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     <div className="space-y-3">
                         <Label>最感兴趣的学科大类 (最多选3个)</Label>
-                        <div className="flex flex-wrap gap-2">
-                            {['人文社科', '自然科学', '工程技术', '艺术设计', '商业经济', '数学统计', '医学健康', '其他'].map(sub => {
-                                const isSelected = (app.personalInfo.interests || []).includes(sub);
-                                return (
-                                    <button
-                                        type="button"
-                                        key={sub}
-                                        disabled={isReadonly}
-                                        onClick={() => handleArrayToggle('personalInfo', 'interests', sub)}
-                                        className={cn(
-                                            "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
-                                            isSelected
-                                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                                : "bg-white text-slate-600 border-slate-200 hover:border-primary/50 hover:bg-slate-50"
-                                        )}
-                                    >
-                                        {sub}
-                                    </button>
-                                )
-                            })}
+                        <div className="space-y-4">
+                            {[
+                                { name: '自然科学', items: ['数学', '物理', '化学', '生物', '医学'] },
+                                { name: '技术工程', items: ['计算机', '工程', '材料学'] },
+                                { name: '社会经济', items: ['经济学', '商科/金融', '社会学', '政治学', '法律', '教育学', '心理学'] },
+                                { name: '人文艺术', items: ['哲学', '历史', '艺术/设计'] }
+                            ].map((group) => (
+                                <div key={group.name} className="space-y-2">
+                                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">
+                                        {group.name}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {group.items.map(sub => {
+                                            const isSelected = (app.personalInfo.interests || []).includes(sub);
+                                            return (
+                                                <button
+                                                    type="button"
+                                                    key={sub}
+                                                    disabled={isReadonly}
+                                                    onClick={() => handleArrayToggle('personalInfo', 'interests', sub)}
+                                                    className={cn(
+                                                        "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 border",
+                                                        isSelected
+                                                            ? "bg-primary text-white border-primary shadow-sm"
+                                                            : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                                    )}
+                                                >
+                                                    {sub}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Other Option Standalone */}
+                            <div className="pt-2">
+                                <button
+                                    type="button"
+                                    disabled={isReadonly}
+                                    onClick={() => handleArrayToggle('personalInfo', 'interests', '其他')}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 border",
+                                        (app.personalInfo.interests || []).includes('其他')
+                                            ? "bg-slate-800 text-white border-slate-800 shadow-sm"
+                                            : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50 border-dashed"
+                                    )}
+                                >
+                                    其他
+                                </button>
+                            </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        {/* Conditional Input for '其他' */}
+                        {(app.personalInfo.interests || []).includes('其他') && (
+                            <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <Label className="text-sm text-slate-600 mb-1.5 block">请输入其他感兴趣的学科：</Label>
+                                <Input
+                                    value={app.personalInfo.otherInterest || ''}
+                                    onChange={e => onChange('personalInfo', 'otherInterest', e.target.value)}
+                                    placeholder="例如：天文学、建筑学..."
+                                    disabled={isReadonly}
+                                    autoFocus
+                                />
+                            </div>
+                        )}
+                        <p className="text-xs text-muted-foreground pt-2">
                             已选: {(app.personalInfo.interests || []).join(', ')}
                         </p>
                     </div>
@@ -319,14 +598,15 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                         </div>
                     </div>
                 </div>
-            </Section>
+            </Section >
 
             {/* Part 4: Thoughts */}
-            <Section number="04" title="让我们看见你的想法" titleEn="Your Ideas" description="在见山学院，这里没有标准答案，只有闪光的想法；我们珍视你独特的观察力、幽默感与思维深度。以下问题旨在帮助我们看见一个鲜活、真实、充满好奇心的你。请放飞想象，打破常规，我们渴望了解到你最真实、有趣的想法。">
+            {/* Part 5: Thoughts */}
+            < Section number="05" title="让我们看见你的想法" titleEn="Your Ideas" description="在见山学院，这里没有标准答案，只有闪光的想法；我们珍视你独特的观察力、幽默感与思维深度。以下问题旨在帮助我们看见一个鲜活、真实、充满好奇心的你。请放飞想象，打破常规，我们渴望了解到你最真实、有趣的想法。" >
                 <div className="space-y-8">
                     {/* Q1: 3 choose 1 */}
                     <div className="space-y-4">
-                        <Label className="text-base text-slate-900">Q1. 请在以下问题中选择一个进行回答：</Label>
+                        <Label className="text-base text-slate-900">Q1. 请在以下问题中选择一个进行回答（选中以展开问题）：</Label>
 
                         <div className="grid grid-cols-1 gap-4">
                             {[
@@ -383,7 +663,7 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                                 <Textarea
                                     value={app.essays.q1Content || ''}
                                     onChange={e => onChange('essays', 'q1Content', e.target.value)}
-                                    placeholder="提示：你可以使用 AI 工具辅助激发灵感，但我们同时希望看到经过你思考后的表达。"
+                                    placeholder="请在这里回答你选择的问题... 期待看到你有趣的想法！"
                                     className="min-h-[200px] text-base leading-relaxed p-4 bg-white/50 focus:bg-white transition-colors border-primary/20 focus:border-primary"
                                     disabled={isReadonly}
                                 />
@@ -426,27 +706,82 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                         </div>
                     </div>
                 </div>
-            </Section>
+            </Section >
 
             {/* Part 5: Last Details */}
-            <Section number="05" title="最后几件小事" titleEn="Final Steps" description="保障你的夏令营体验">
+            {/* Part 6: Last Details */}
+            < Section number="06" title="最后几件小事" titleEn="Final Steps" description="保障你的夏令营体验" >
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label>健康状况申报</Label>
-                            <Input
-                                value={app.misc?.healthCondition || ''}
-                                onChange={e => onChange('misc', 'healthCondition', e.target.value)}
-                                placeholder="无 / 过敏史 / 长期服药" disabled={isReadonly}
-                            />
+                        <div className="space-y-3">
+                            <Label>是否有特殊健康状况申报？</Label>
+                            <RadioGroup
+                                disabled={isReadonly}
+                                value={(app.misc?.healthCondition === '无' || app.misc?.healthCondition == null) ? 'no' : 'yes'}
+                                onValueChange={(val) => {
+                                    if (val === 'no') {
+                                        onChange('misc', 'healthCondition', '无');
+                                    } else {
+                                        onChange('misc', 'healthCondition', '');
+                                    }
+                                }}
+                                className="flex space-x-4 mb-2"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="no" id="health-no" />
+                                    <Label htmlFor="health-no" className="font-normal cursor-pointer">无</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="yes" id="health-yes" />
+                                    <Label htmlFor="health-yes" className="font-normal cursor-pointer">有需要申报的情况</Label>
+                                </div>
+                            </RadioGroup>
+                            {app.misc?.healthCondition !== '无' && (
+                                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <Input
+                                        value={app.misc?.healthCondition}
+                                        onChange={e => onChange('misc', 'healthCondition', e.target.value)}
+                                        placeholder="请具体描述（如过敏史、长期服药等）"
+                                        disabled={isReadonly}
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
                         </div>
-                        <div className="space-y-2">
-                            <Label>饮食习惯</Label>
-                            <Input
-                                value={app.misc?.dietaryRestrictions || ''}
-                                onChange={e => onChange('misc', 'dietaryRestrictions', e.target.value)}
-                                placeholder="无 / 素食 / 清真 / 忌口" disabled={isReadonly}
-                            />
+                        <div className="space-y-3">
+                            <Label>是否有特殊饮食习惯？</Label>
+                            <RadioGroup
+                                disabled={isReadonly}
+                                value={(app.misc?.dietaryRestrictions === '无' || app.misc?.dietaryRestrictions == null) ? 'no' : 'yes'}
+                                onValueChange={(val) => {
+                                    if (val === 'no') {
+                                        onChange('misc', 'dietaryRestrictions', '无');
+                                    } else {
+                                        onChange('misc', 'dietaryRestrictions', '');
+                                    }
+                                }}
+                                className="flex space-x-4 mb-2"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="no" id="diet-no" />
+                                    <Label htmlFor="diet-no" className="font-normal cursor-pointer">无</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="yes" id="diet-yes" />
+                                    <Label htmlFor="diet-yes" className="font-normal cursor-pointer">有特殊饮食习惯</Label>
+                                </div>
+                            </RadioGroup>
+                            {app.misc?.dietaryRestrictions !== '无' && (
+                                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <Input
+                                        value={app.misc?.dietaryRestrictions}
+                                        onChange={e => onChange('misc', 'dietaryRestrictions', e.target.value)}
+                                        placeholder="请具体描述（如素食、清真、忌口等）"
+                                        disabled={isReadonly}
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -460,24 +795,36 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                                 <SelectItem value="wechat">微信公众号</SelectItem>
                                 <SelectItem value="friend">朋友推荐</SelectItem>
                                 <SelectItem value="school">学校老师/升学指导</SelectItem>
-                                <SelectItem value="poster">线下海报</SelectItem>
+                                <SelectItem value="poster">小红书</SelectItem>
                                 <SelectItem value="other">其他</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     <div className="space-y-3">
-                        <Label>最期待从见山学院获得什么？(多选 Max 3)</Label>
+                        <Label>最期待从见山学院获得什么？(多选，最多两项)</Label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {['结识志同道合的朋友', '提升英语能力', '体验创新课程', '丰富背景履历', '明确未来方向', '纯粹好玩'].map(g => {
+                            {['锻炼英语口语能力', '明确未来选课方向', '丰富履历助力升学', '和剑桥学长姐交流', '体验创新通识课程', '结识志同道合伙伴'].map(g => {
                                 const isSelected = (app.misc?.goals || []).includes(g);
                                 return (
                                     <div
                                         key={g}
-                                        onClick={() => !isReadonly && handleArrayToggle('misc', 'goals', g)}
+                                        onClick={() => {
+                                            if (!isReadonly) {
+                                                const currentGoals = app.misc?.goals || [];
+                                                if (isSelected) {
+                                                    handleArrayToggle('misc', 'goals', g);
+                                                } else {
+                                                    if (currentGoals.length < 2) {
+                                                        handleArrayToggle('misc', 'goals', g);
+                                                    }
+                                                }
+                                            }
+                                        }}
                                         className={cn(
                                             "cursor-pointer px-4 py-3 rounded-lg border flex items-center justify-between transition-all",
-                                            isSelected ? "bg-primary/5 border-primary" : "bg-white border-slate-200 hover:bg-slate-50"
+                                            isSelected ? "bg-primary/5 border-primary" : "bg-white border-slate-200 hover:bg-slate-50",
+                                            (!isSelected && (app.misc?.goals || []).length >= 2) && "opacity-50 cursor-not-allowed"
                                         )}
                                     >
                                         <span className={cn("text-sm font-medium", isSelected ? "text-primary" : "text-slate-600")}>{g}</span>
@@ -488,59 +835,116 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                         </div>
                     </div>
                 </div>
-            </Section>
+            </Section >
 
-            {/* Part 6: Terms & Submit - Only show submit area if onSubmit is provided (Apply Page needs it, Admin doesn't) */}
-            {onSubmit && (
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="flex items-start gap-4">
-                            <Checkbox
-                                id="terms-standalone"
-                                disabled={isReadonly}
-                                checked={app.misc?.agreedToTerms || false}
-                                onCheckedChange={(c) => onChange('misc', 'agreedToTerms', c === true)}
-                                className="mt-1"
+            {/* WeChat Follow Section - Standalone */}
+            {/* WeChat Follow Section - Split Card Design */}
+            <div className="mt-8 rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                {/* Top Section: Checkbox - Light Background */}
+                <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100">
+                    <div className="flex items-start gap-3">
+                        <Checkbox
+                            id="wechat-follow-check"
+                            disabled={isReadonly}
+                            checked={app.misc?.hasFollowedWechatOfficialAccount || false}
+                            onCheckedChange={(c) => onChange('misc', 'hasFollowedWechatOfficialAccount', c === true)}
+                            className="mt-1"
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <label
+                                htmlFor="wechat-follow-check"
+                                className="text-base font-medium text-slate-900 peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                                我已关注公众号
+                            </label>
+                            <p className="text-sm text-slate-500">
+                                确认已扫描下方二维码关注公众号
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Section: QR Code & Info - White Background */}
+                <div className="bg-white p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 md:gap-10">
+                    {/* QR Code - Clean & Small */}
+                    <div className="shrink-0 w-24 h-24 bg-white rounded-lg border border-slate-200 p-2 shadow-sm">
+                        <div className="w-full h-full border border-slate-100 rounded bg-white flex items-center justify-center overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src="/assets/wechat-qrcode.jpg"
+                                alt="见山学院公众号"
+                                className="w-full h-full object-cover"
                             />
-                            <div className="grid gap-2 leading-none">
-                                <label
-                                    htmlFor="terms-standalone"
-                                    className="text-base font-semibold text-slate-900 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                    确认并提交
-                                </label>
-                                <p className="text-sm text-slate-500 leading-normal">
-                                    本人承诺上述填写的所有信息均真实有效。如果被录取，本人同意遵守见山学院夏令营的各项规章制度，积极参与课程与活动。
-                                </p>
-                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-end justify-end gap-4 pt-4">
-                        <p className="text-sm text-slate-400 pb-1">
-                            请确认信息无误后提交，提交后将无法修改。
+                    <div className="space-y-1 text-center md:text-left flex-1">
+                        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 w-fit mx-auto md:mx-0 mb-2">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider">Official Channel</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900">
+                            关注「见山JSA」官方公众号
+                        </h3>
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                            第一时间获取申请进度、营地动态、导师阵容及课题发布等重要信息。
                         </p>
-                        <Button
-                            type="button"
-                            onClick={onSubmit}
-                            size="lg"
-                            className="min-w-[240px] h-12 text-base border-none shadow-none focus-visible:ring-0"
-                            disabled={isReadonly || saving || !app.misc?.agreedToTerms}
-                        >
-                            {saving ? (
-                                <>
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                    提交中...
-                                </>
-                            ) : (
-                                <>
-                                    提交申请 <ArrowRight className="ml-2 h-5 w-5" />
-                                </>
-                            )}
-                        </Button>
                     </div>
                 </div>
-            )}
-        </div>
+            </div>
+
+            {/* Part 6: Terms & Submit - Only show submit area if onSubmit is provided (Apply Page needs it, Admin doesn't) */}
+            {
+                onSubmit && (
+                    <div className="space-y-6">
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <div className="flex items-start gap-4">
+                                <Checkbox
+                                    id="terms-standalone"
+                                    disabled={isReadonly}
+                                    checked={app.misc?.agreedToTerms || false}
+                                    onCheckedChange={(c) => onChange('misc', 'agreedToTerms', c === true)}
+                                    className="mt-1"
+                                />
+                                <div className="grid gap-2 leading-none">
+                                    <label
+                                        htmlFor="terms-standalone"
+                                        className="text-base font-semibold text-slate-900 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        确认并提交
+                                    </label>
+                                    <p className="text-sm text-slate-500 leading-normal">
+                                        本人承诺上述填写的所有信息均真实有效。如果被录取，本人同意遵守见山学院夏令营的各项规章制度，积极参与课程与活动。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-end justify-end gap-4 pt-4">
+                            <p className="text-sm text-slate-400 pb-1">
+                                请确认信息无误后提交，提交后将无法修改。
+                            </p>
+                            <Button
+                                type="button"
+                                onClick={onSubmit}
+                                size="lg"
+                                className="min-w-[240px] h-12 text-base border-none shadow-none focus-visible:ring-0"
+                                disabled={isReadonly || saving || !app.misc?.agreedToTerms}
+                            >
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                        提交中...
+                                    </>
+                                ) : (
+                                    <>
+                                        提交申请 <ArrowRight className="ml-2 h-5 w-5" />
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 }

@@ -577,7 +577,7 @@ export default function DashboardPage() {
                                     <div className="mt-4 pt-4 border-t flex gap-4">
                                         <Button size="lg" asChild>
                                             <Link href="/acceptance">
-                                                查看申请结果 <ArrowRight className="h-5 w-5" />
+                                                查看申请结果 <ArrowRight className="h-5 w-5" strokeWidth={3} />
                                             </Link>
                                         </Button>
                                     </div>
@@ -592,7 +592,7 @@ export default function DashboardPage() {
                                     <div className="mt-4 pt-4 border-t flex gap-4">
                                         <Button size="lg" asChild>
                                             <Link href="/apply">
-                                                继续申请 <ArrowRight className="h-5 w-5" />
+                                                继续申请 <ArrowRight className="h-5 w-5" strokeWidth={3} />
                                             </Link>
                                         </Button>
                                     </div>
@@ -624,7 +624,7 @@ export default function DashboardPage() {
                             <p className="text-sm text-white/80 mb-4 opacity-90">请优先查看<Link href="/faq" className="mx-1 font-bold hover:underline cursor-pointer">常见问题Q&A</Link>页面；若问题仍未解决，欢迎您联系我们的招生团队。</p>
                             <Button size="sm" className="w-full sm:w-auto" asChild>
                                 <a href="mailto:admissions@jianshan.com">
-                                    <Mail className="mr-1 h-4 w-4" />
+                                    <Mail className="mr-1 h-4 w-4" strokeWidth={2.5} />
                                     邮件联系
                                 </a>
                             </Button>

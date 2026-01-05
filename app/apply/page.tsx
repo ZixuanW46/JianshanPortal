@@ -166,7 +166,20 @@ export default function ApplyPage() {
                     <div className="flex items-center gap-3">
                         {isReadonly ? (
                             <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-semibold">
-                                {app.status === 'submitted' ? '已提交 Pending Review' : app.status}
+                                {(() => {
+                                    const STATUS_MAP: Record<string, string> = {
+                                        'draft': '草稿 Draft',
+                                        'submitted': '已提交 Pending Review',
+                                        'under_review': '审核中 Under Review',
+                                        'decision_released': '结果已出 Decision Released',
+                                        'enrolled': '已录取 Enrolled',
+                                        'paid': '已缴费 Paid',
+                                        'rejected': '未录取 Rejected',
+                                        'waitlisted': '候补 Waitlisted',
+                                        'cancelled': '已取消 Cancelled'
+                                    };
+                                    return STATUS_MAP[app.status] || app.status;
+                                })()}
                             </span>
                         ) : (
                             <>

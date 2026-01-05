@@ -22,9 +22,12 @@ export interface Application {
         wechatId?: string;
         emergencyContactName?: string;
         emergencyContactPhone?: string;
+        emergencyContactWechat?: string;
         school: string;
         grade: string;
+        camp?: 'shanghai' | 'hangzhou'; // Camp Selection
         interests?: string[]; // Max 3
+        otherInterest?: string; // If 'Other' is selected
         englishProficiency?: string; // Score or File URL
     };
     essays: {
@@ -40,6 +43,7 @@ export interface Application {
         referralSource?: string;
         goals?: string[];
         agreedToTerms?: boolean;
+        hasFollowedWechatOfficialAccount?: boolean;
     };
     payment?: {
         status: 'unpaid' | 'paid' | 'pending';
