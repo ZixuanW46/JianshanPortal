@@ -480,7 +480,6 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                                             onChange={e => onChange('personalInfo', 'school', e.target.value)}
                                             placeholder="请输入就读学校名称"
                                             disabled={isReadonly}
-                                            autoFocus
                                         />
                                     </div>
                                 )}
@@ -566,7 +565,6 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                                     onChange={e => onChange('personalInfo', 'otherInterest', e.target.value)}
                                     placeholder="例如：天文学、建筑学..."
                                     disabled={isReadonly}
-                                    autoFocus
                                 />
                             </div>
                         )}
@@ -655,9 +653,9 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
 
                                     <span className={cn(
                                         "text-xs transition-colors",
-                                        (app.essays.q1Content || '').length > 500 ? "text-red-500 font-bold" : "text-slate-400"
+                                        (app.essays.q1Content || '').length > 300 ? "text-red-500 font-bold" : "text-slate-400"
                                     )}>
-                                        建议500字以内 ({(app.essays.q1Content || '').length}/500)
+                                        建议300字以内 ({(app.essays.q1Content || '').length}/300)
                                     </span>
                                 </div>
                                 <Textarea
@@ -691,9 +689,9 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
 
                                 <span className={cn(
                                     "text-xs transition-colors",
-                                    ((app.essays.q2Content || '').trim().split(/\s+/).filter(Boolean).length) > 500 ? "text-red-500 font-bold" : "text-slate-400"
+                                    ((app.essays.q2Content || '').trim().split(/\s+/).filter(Boolean).length) > 300 ? "text-red-500 font-bold" : "text-slate-400"
                                 )}>
-                                    Suggested length: 500 words ({(app.essays.q2Content || '').trim().split(/\s+/).filter(Boolean).length}/500)
+                                    Suggested length: 300 words ({(app.essays.q2Content || '').trim().split(/\s+/).filter(Boolean).length}/300)
                                 </span>
                             </div>
                             <Textarea
@@ -743,7 +741,6 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                                         onChange={e => onChange('misc', 'healthCondition', e.target.value)}
                                         placeholder="请具体描述（如过敏史、长期服药等）"
                                         disabled={isReadonly}
-                                        autoFocus
                                     />
                                 </div>
                             )}
@@ -778,7 +775,6 @@ export function ApplicationForm({ app, onChange, isReadonly = false, onSubmit, o
                                         onChange={e => onChange('misc', 'dietaryRestrictions', e.target.value)}
                                         placeholder="请具体描述（如素食、清真、忌口等）"
                                         disabled={isReadonly}
-                                        autoFocus
                                     />
                                 </div>
                             )}

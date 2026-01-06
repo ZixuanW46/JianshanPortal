@@ -57,7 +57,7 @@ export function Navbar() {
                     isVisible ? "translate-y-0" : "-translate-y-full"
                 )}
             >
-                <div className="container px-4 md:px-8 flex h-16 items-center justify-between mx-auto max-w-7xl">
+                <div className="container px-4 md:px-4 flex h-16 items-center justify-between mx-auto max-w-7xl">
                     <div className="flex items-center gap-2 md:gap-4">
                         <Link
                             href={!user ? "/" : (isAdmin ? "/admin/dashboard" : "/dashboard")}

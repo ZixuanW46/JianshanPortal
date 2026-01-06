@@ -15,12 +15,20 @@ const IMAGES = [
 
 export function useBackground() {
     const [backgroundImage, setBackgroundImage] = useState<string>("");
+    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         // Select a random image only on the client side to avoid hydration mismatch
         const randomImage = IMAGES[Math.floor(Math.random() * IMAGES.length)];
         setBackgroundImage(randomImage);
+
+        // Preload the image
+        const img = new Image();
+        img.onload = () => {
+            setIsLoaded(true);
+        };
+        img.src = randomImage;
     }, []);
 
-    return backgroundImage;
+    return { backgroundImage, isLoaded };
 }

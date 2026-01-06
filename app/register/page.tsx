@@ -15,7 +15,7 @@ import { Loader2, Lock, Smartphone, User, Eye, EyeOff, MessagesSquare } from "lu
 export default function RegisterPage() {
     const router = useRouter();
     const { registerWithMobile, sendSmsCode } = useAuth();
-    const backgroundImage = useBackground();
+    const { backgroundImage, isLoaded } = useBackground();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -32,6 +32,7 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleGetCode = async () => {
         if (!formData.mobile) {
@@ -42,6 +43,10 @@ export default function RegisterPage() {
 
         try {
             await sendSmsCode(formData.mobile);
+            // Show success message
+            setSuccessMessage("短信验证码已发送！由腾讯云代发，短信开头为【腾讯云】，请注意查收。");
+            // Auto-hide success message after 5 seconds
+            setTimeout(() => setSuccessMessage(""), 5000);
             // Start countdown only on success
             setCountdown(60);
             const timer = setInterval(() => {
@@ -217,9 +222,9 @@ export default function RegisterPage() {
                 <div className="relative h-[30vh] w-full bg-slate-900 shrink-0 overflow-hidden">
                     {/* Background Image */}
                     <div
-                        className="absolute inset-0 bg-cover"
+                        className={`absolute inset-0 bg-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                         style={{
-                            backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')`,
+                            backgroundImage: backgroundImage ? `url('${backgroundImage}')` : 'none',
                             backgroundPosition: "68% 35%"
                         }}
                     />
@@ -256,6 +261,12 @@ export default function RegisterPage() {
                                 </div>
                             )}
 
+                            {successMessage && (
+                                <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-[12px] font-medium border border-green-100">
+                                    {successMessage}
+                                </div>
+                            )}
+
                             {renderForm(true)}
 
                             <div className="text-center mt-2 pb-6">
@@ -278,8 +289,8 @@ export default function RegisterPage() {
             <div className="hidden lg:block relative w-full lg:h-[calc(100vh-3rem)] lg:rounded-[2rem] overflow-hidden bg-primary/95 group/design-root shadow-2xl">
                 {/* Background Image with Overlay */}
                 <div
-                    className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-                    style={{ backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')` }}
+                    className={`absolute inset-0 z-0 bg-cover bg-center transition-all duration-700 hover:scale-105 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                    style={{ backgroundImage: backgroundImage ? `url('${backgroundImage}')` : 'none' }}
                 />
                 <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
@@ -332,6 +343,12 @@ export default function RegisterPage() {
                                 {error && (
                                     <div className="bg-red-50/80 backdrop-blur-sm text-red-600 px-4 py-3 rounded-md text-sm font-medium border border-red-100">
                                         {error}
+                                    </div>
+                                )}
+
+                                {successMessage && (
+                                    <div className="bg-green-50/80 backdrop-blur-sm text-green-700 px-4 py-3 rounded-md text-sm font-medium border border-green-100">
+                                        {successMessage}
                                     </div>
                                 )}
 

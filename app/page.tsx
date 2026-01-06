@@ -13,7 +13,7 @@ import { MessagesSquare, Phone } from "lucide-react";
 export default function LandingPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const backgroundImage = useBackground();
+  const { backgroundImage, isLoaded } = useBackground();
 
   useEffect(() => {
     if (!loading && user) {
@@ -33,9 +33,9 @@ export default function LandingPage() {
         <div className="relative h-[45vh] w-full bg-slate-900 shrink-0 overflow-hidden">
           {/* Background Image */}
           <div
-            className="absolute inset-0 bg-cover"
+            className={`absolute inset-0 bg-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
             style={{
-              backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')`,
+              backgroundImage: backgroundImage ? `url('${backgroundImage}')` : 'none',
               backgroundPosition: "68% 35%"
             }}
           />
@@ -125,8 +125,8 @@ export default function LandingPage() {
       <div className="hidden lg:block relative w-full lg:h-[calc(100vh-3rem)] lg:rounded-[2rem] overflow-hidden bg-primary/95 group/design-root shadow-2xl">
         {/* Background Image */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-          style={{ backgroundImage: `url('${backgroundImage || "/login-bg.jpg"}')` }}
+          className={`absolute inset-0 z-0 bg-cover bg-center transition-all duration-700 hover:scale-105 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          style={{ backgroundImage: backgroundImage ? `url('${backgroundImage}')` : 'none' }}
         />
         <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
