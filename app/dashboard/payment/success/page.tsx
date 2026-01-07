@@ -258,7 +258,7 @@ function PaymentStatusContent() {
                         <div
                             className="bg-center bg-no-repeat bg-cover rounded-xl w-full aspect-[2/1] mb-8 relative overflow-hidden group border animate-in fade-in duration-1000"
                             style={{
-                                backgroundImage: "url('/images/welcome-bg.jpg')",
+                                backgroundImage: "url('/images/welcome-bg.webp')",
                                 animation: "brighten 1.5s ease-out forwards"
                             }}
                         >

@@ -1,14 +1,30 @@
 "use client"
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle } from "lucide-react";
 
 export default function WelcomePage() {
+    const [imageLoaded, setImageLoaded] = useState(false);
+
+    useEffect(() => {
+        const img = new Image();
+        img.src = '/images/welcome-bg.webp';
+        img.onload = () => setImageLoaded(true);
+    }, []);
+
     return (
         <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-16 animate-in fade-in zoom-in duration-500">
             <div className="flex flex-col items-center bg-card rounded-xl p-8 md:p-12 shadow-sm border w-full max-w-[640px]">
-                {/* Illustration */}
-                <div className="bg-center bg-no-repeat bg-cover rounded-xl w-full aspect-[2/1] mb-8 relative overflow-hidden group border" style={{ backgroundImage: "url('/images/welcome-bg.jpg')" }}>
+                {/* Illustration with fade-in loading */}
+                <div
+                    className="rounded-xl w-full aspect-[2/1] mb-8 relative overflow-hidden group border"
+                    style={{ backgroundColor: '#1f495b' }}
+                >
+                    <div
+                        className={`absolute inset-0 bg-center bg-no-repeat bg-cover transition-opacity duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        style={{ backgroundImage: "url('/images/welcome-bg.webp')" }}
+                    />
                     <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/10 transition-colors duration-500"></div>
                 </div>
 
